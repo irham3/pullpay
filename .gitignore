@@ -1,8 +1,23 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
 target/
-*.local
+
+# Foundry
+contracts/lib/
+contracts/out/
+contracts/cache/
+
+# Environment & secrets
 .env
+*.local
+
+# IDE & editor
+.vscode/
+
+# Misc
 keeper-state.json
 docs/
 .claude/
