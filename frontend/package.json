@@ -22,7 +22,7 @@
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0",
     "viem": "^2.54.6",
-    "wagmi": "^3.7.0"
+    "wagmi": "^2.19.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
