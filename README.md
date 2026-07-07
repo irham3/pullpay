@@ -54,7 +54,7 @@ flowchart TD
     end
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 The system is built to be trust-minimized and reliable, utilizing the best of the Optimism ecosystem.
 
