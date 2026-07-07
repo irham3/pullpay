@@ -1,29 +1,33 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import {
-  getDefaultConfig,
-  RainbowKitProvider,
-} from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
-import { optimismSepolia } from 'wagmi/chains';
-import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import '@rainbow-me/rainbowkit/styles.css';
+import * as React from "react";
+import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
+import { WagmiProvider, type State } from "wagmi";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { config } from "@/lib/wagmi";
+import "@rainbow-me/rainbowkit/styles.css";
 
-const config = getDefaultConfig({
-  appName: 'PullPay',
-  projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID || '3251a2ac5ccda8f02540b616ecac4b24',
-  chains: [optimismSepolia],
-  ssr: true,
-});
+export function Providers({
+  children,
+  initialState,
+}: {
+  children: React.ReactNode;
+  initialState?: State;
+}) {
+  // One QueryClient per app mount; stable across renders.
+  const [queryClient] = React.useState(() => new QueryClient());
 
-const queryClient = new QueryClient();
-
-export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <WagmiProvider config={config}>
+    <WagmiProvider config={config} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <RainbowKitProvider
+          theme={darkTheme({
+            accentColor: "#7C8CFF",
+            accentColorForeground: "#0B0B0C",
+            borderRadius: "small",
+            fontStack: "system",
+          })}
+        >
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>

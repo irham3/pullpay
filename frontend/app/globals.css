@@ -59,13 +59,98 @@ body {
 }
 
 /* Angka & data on-chain */
-.tnum { 
-  font-feature-settings: "tnum" 1; 
-  font-variant-numeric: tabular-nums; 
+.tnum {
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.font-mono {
+  font-family: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 /* Latar dot-grid sangat samar (~3%) */
 .dot-grid {
-  background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot-color, rgba(255, 255, 255, 0.06)) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+[data-theme="light"] .dot-grid {
+  --dot-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Hairline separators that follow the light divider fade at the edges. */
+.hairline-t {
+  border-top: 1px solid var(--border);
+}
+
+/* Motion — calm, 150–250ms ease-out, once (DESIGN.md §2.3 / §6). */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.reveal {
+  animation: fade-up 0.28s ease-out both;
+}
+
+@keyframes sheen {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+/* Very subtle sheen over muted text — not a rainbow gradient (DESIGN.md §6.2). */
+.shiny {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--muted) 40%,
+    var(--text) 50%,
+    var(--muted) 60%,
+    var(--muted) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: sheen 6s linear infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.live-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+/* Respect the user's motion preference (DESIGN.md §6.1 / §9). */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .shiny,
+  .live-dot {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Thin, quiet scrollbars to match the engineered aesthetic. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-2) transparent;
 }

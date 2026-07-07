@@ -1,0 +1,84 @@
+"use client";
+
+import * as React from "react";
+import { useAccount, useSignMessage } from "wagmi";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Link2, Check, Loader2 } from "lucide-react";
+
+// Contributor links their GitHub username → wallet by signing an ownership
+// message (SIWE-style, PRD §30.5). The relayer uses this mapping to pay the
+// right wallet when a PR by that author merges.
+export function LinkGithubCard() {
+  const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+  const [handle, setHandle] = React.useState("");
+  const [state, setState] = React.useState<"idle" | "signing" | "ok" | "error">(
+    "idle"
+  );
+  const [msg, setMsg] = React.useState<string | null>(null);
+
+  if (!isConnected) return null;
+
+  async function link() {
+    if (!handle || !address) return;
+    setState("signing");
+    setMsg(null);
+    try {
+      const message = `PullPay: link GitHub @${handle} to wallet ${address}`;
+      const signature = await signMessageAsync({ message });
+      const res = await fetch("/api/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handle, address, signature }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "link failed");
+      setState("ok");
+      setMsg(`Linked @${handle} → ${address.slice(0, 6)}…`);
+    } catch (e) {
+      setState("error");
+      setMsg(e instanceof Error ? e.message : "link failed");
+    }
+  }
+
+  return (
+    <div className="rounded-[10px] border border-border bg-surface p-5">
+      <div className="flex items-center gap-2 text-sm font-medium text-text">
+        <Link2 className="h-4 w-4 text-muted" strokeWidth={1.5} />
+        Link GitHub → wallet
+      </div>
+      <p className="mt-1.5 text-xs text-muted">
+        So the relayer pays you when your merged PR settles. Receiving costs no
+        gas — this just proves the wallet is yours.
+      </p>
+      <div className="mt-3 flex gap-2">
+        <Input
+          value={handle}
+          onChange={(e) => setHandle(e.target.value.replace(/^@/, ""))}
+          placeholder="your-github-username"
+        />
+        <Button
+          onClick={link}
+          disabled={!handle || state === "signing"}
+          className="shrink-0"
+        >
+          {state === "signing" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : state === "ok" ? (
+            <Check className="h-4 w-4" />
+          ) : (
+            "Link"
+          )}
+        </Button>
+      </div>
+      {msg && (
+        <p
+          className={`mt-2 text-xs ${state === "error" ? "text-bad" : "text-ok"}`}
+        >
+          {msg}
+        </p>
+      )}
+    </div>
+  );
+}

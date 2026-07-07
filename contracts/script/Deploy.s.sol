@@ -17,14 +17,19 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        new PullPayEscrow(
+        PullPayEscrow escrow = new PullPayEscrow(
             oo,
             eas,
             easSchema,
             bondCurrency,
             relayer
         );
+        // Short challenge window for a hackathon demo (§16/§18).
+        escrow.setLiveness(uint64(vm.envOr("LIVENESS_SECONDS", uint256(120))));
 
         vm.stopBroadcast();
+
+        console2.log("PullPayEscrow deployed:", address(escrow));
+        console2.log("Set NEXT_PUBLIC_ESCROW_ADDRESS to the address above.");
     }
 }

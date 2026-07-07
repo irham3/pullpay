@@ -1,31 +1,29 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
+import { STATUS_META, signalVar, type UiStatus } from "@/lib/status";
 
-export const STATUS = {
-  Open:      { dot: "var(--muted)" },
-  Funded:    { dot: "var(--ok)" },
-  "In Review":{ dot: "var(--accent)" },
-  Verifying: { dot: "var(--warn)" },
-  Paid:      { dot: "var(--ok)" },
-  Disputed:  { dot: "var(--bad)" },
-  Refunded:  { dot: "var(--muted)" },
-  Rejected:  { dot: "var(--bad)" },
-} as const;
-
-export function StatusPill({ 
-  status, 
-  className 
-}: { 
-  status: keyof typeof STATUS,
-  className?: string
+export function StatusPill({
+  status,
+  className,
+  live = false,
+}: {
+  status: UiStatus;
+  className?: string;
+  /** Pulse the dot for time-sensitive states (Verifying / Disputed). */
+  live?: boolean;
 }) {
-  const dotStyle = { background: STATUS[status]?.dot || STATUS.Open.dot };
+  const meta = STATUS_META[status];
   return (
-    <span className={cn(
-      "inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-text",
-      className
-    )}>
-      <span className="h-1.5 w-1.5 rounded-full" style={dotStyle} />
+    <span
+      title={meta.description}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-text whitespace-nowrap",
+        className
+      )}
+    >
+      <span
+        className={cn("h-1.5 w-1.5 rounded-full", live && "live-dot")}
+        style={{ background: signalVar[meta.dot] }}
+      />
       {status}
     </span>
   );
