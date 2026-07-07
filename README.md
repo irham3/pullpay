@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">PullPay x Optimism</h1>
+  <h1 align="center">PullPay</h1>
   <p align="center">
     <strong>Trust-minimized open source rewards on Optimism.</strong><br>
     Merge the PR, the contributor gets paid in USDC — verified without an intermediary, settled without gas, and recorded as on-chain reputation.
@@ -14,20 +14,19 @@
   <img alt="Solidity" src="https://img.shields.io/badge/Solidity-Smart_Contracts-363636?style=flat-square&logo=solidity&logoColor=white&labelColor=0B0F14">
 </p>
 
----
-
-## 💡 The Problem & Vision
+## The Problem & Vision
 
 The open source ecosystem runs on hundreds of small contributions (bug fixes, docs, translations, tooling). But paying a $5–20 reward is surprisingly hard: fees eat the reward, manual payouts are a hassle, and contributors have no guarantee they will actually get paid.
 
-**PullPay** solves this with an **on-chain escrow + GitHub automation**. A maintainer locks USDC in a smart contract and adds a single workflow file to their repo. When a Pull Request (PR) is merged and verified, USDC is automatically paid to the contributor. 
+**PullPay** solves this with an **on-chain escrow + GitHub automation**. A maintainer locks USDC in a smart contract and adds a single workflow file to their repo. When a Pull Request (PR) is merged and verified, USDC is automatically paid to the contributor.
 
 What makes PullPay different?
+
 - **Decentralized Verification (UMA):** We don't just rely on a centralized bot to check `merged == true`. Anyone can dispute a payout if the PR quality is poor.
 - **On-Chain Reputation (EAS):** Every paid contribution mints an attestation, creating a portable, verifiable developer CV.
 - **Gasless Claims (ERC-4337):** Contributors don't need ETH. The USDC just arrives.
 
-## 🔄 How It Works
+## How It Works
 
 ```mermaid
 flowchart TD
@@ -81,7 +80,7 @@ flowchart LR
     ESC --> PM
 ```
 
-## 📂 Repository Layout
+## Repository Layout
 
 ```text
 contracts/               Foundry project — PullPayEscrow & WhitelistEM (Solidity)
@@ -89,9 +88,10 @@ frontend/                Next.js App Router — Web UI, dashboard, and relayer A
 docs/                    Product Requirements Document (PRD) and Planning notes
 ```
 
-## 🚀 Quickstart
+## Quickstart
 
 **1. Smart Contracts**
+
 ```bash
 cd contracts
 forge install
@@ -99,6 +99,7 @@ forge test
 ```
 
 **2. Frontend & Relayer**
+
 ```bash
 cd frontend
 npm install
