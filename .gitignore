@@ -1,0 +1,9 @@
+node_modules/
+dist/
+target/
+*.local
+.env
+keeper-state.json
+docs/
+.claude/
+*.tsbuildinfo
