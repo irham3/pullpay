@@ -17,7 +17,7 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        PullPayEscrow escrow = new PullPayEscrow(
+        new PullPayEscrow(
             oo,
             eas,
             easSchema,
