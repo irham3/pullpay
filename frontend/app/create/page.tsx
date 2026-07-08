@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 
 // lucide-react doesn't include brand icons — inline the GitHub mark.
-function GithubIcon({ className, strokeWidth: _sw, ...props }: React.SVGProps<SVGSVGElement> & { strokeWidth?: number }) {
+function GithubIcon({ className, ...props }: React.SVGProps<SVGSVGElement> & { strokeWidth?: number }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
       <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6.02 0c2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18a4.65 4.65 0 0 1 1.24 3.22c0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.22.69.83.57A12 12 0 0 0 12 .3" />
@@ -70,14 +70,12 @@ function CreateRewardContent() {
   const { address, isConnected } = useAccount();
 
   // GitHub identity (from OAuth callback or cookie).
-  const [ghUser, setGhUser] = React.useState<string | null>(null);
-  React.useEffect(() => {
+  const ghUser = React.useMemo(() => {
     const fromQuery = searchParams.get("gh");
     if (fromQuery && fromQuery !== "error" && fromQuery !== "unconfigured") {
-      setGhUser(fromQuery);
-    } else {
-      setGhUser(getCookie("pullpay_gh"));
+      return fromQuery;
     }
+    return getCookie("pullpay_gh");
   }, [searchParams]);
 
   // Source mode: GitHub-first or manual URL.
@@ -140,44 +138,64 @@ function CreateRewardContent() {
   // ---------- Fetch repos when GitHub user is known ----------
   React.useEffect(() => {
     if (!ghUser || sourceMode !== "github") return;
-    setReposLoading(true);
-    fetch(`/api/github/repos?user=${encodeURIComponent(ghUser)}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setRepos(d.repos ?? []);
-        setReposLoading(false);
-      })
-      .catch(() => {
-        setRepos([]);
-        setReposLoading(false);
-      });
+    let ignore = false;
+    const controller = new AbortController();
+    (async () => {
+      setReposLoading(true);
+      try {
+        const r = await fetch(
+          `/api/github/repos?user=${encodeURIComponent(ghUser)}`,
+          { signal: controller.signal }
+        );
+        const d = await r.json();
+        if (!ignore) {
+          setRepos(d.repos ?? []);
+          setReposLoading(false);
+        }
+      } catch {
+        if (!ignore) {
+          setRepos([]);
+          setReposLoading(false);
+        }
+      }
+    })();
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
   }, [ghUser, sourceMode]);
 
   // ---------- Fetch issues when repo is selected ----------
   React.useEffect(() => {
     if (!selectedRepo || sourceMode !== "github") return;
-    setIssuesLoading(true);
-    setSelectedIssue(null);
-    setIssueSearch("");
-    fetch(`/api/github/issues?repo=${encodeURIComponent(selectedRepo)}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setIssues(d.issues ?? []);
-        setIssuesLoading(false);
-      })
-      .catch(() => {
-        setIssues([]);
-        setIssuesLoading(false);
-      });
+    let ignore = false;
+    const controller = new AbortController();
+    (async () => {
+      setIssuesLoading(true);
+      setSelectedIssue(null);
+      setIssueSearch("");
+      try {
+        const r = await fetch(
+          `/api/github/issues?repo=${encodeURIComponent(selectedRepo)}`,
+          { signal: controller.signal }
+        );
+        const d = await r.json();
+        if (!ignore) {
+          setIssues(d.issues ?? []);
+          setIssuesLoading(false);
+        }
+      } catch {
+        if (!ignore) {
+          setIssues([]);
+          setIssuesLoading(false);
+        }
+      }
+    })();
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
   }, [selectedRepo, sourceMode]);
-
-  // When an issue is selected, auto-fill the title.
-  React.useEffect(() => {
-    if (selectedIssue && !title) {
-      setTitle(selectedIssue.title);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIssue]);
 
   // ---------- Validate manual URL ----------
   async function validateManualUrl() {
@@ -417,12 +435,8 @@ function CreateRewardContent() {
                       <button
                         type="button"
                         onClick={() => {
-                          setGhUser(null);
-                          document.cookie = "pullpay_gh=; path=/; max-age=0";
-                          setRepos([]);
-                          setSelectedRepo("");
-                          setIssues([]);
-                          setSelectedIssue(null);
+                          document.cookie = "pullpay_gh=; max-age=0; path=/";
+                          window.location.href = "/create";
                         }}
                         className="text-xs text-muted hover:text-text transition-colors"
                       >
@@ -494,7 +508,10 @@ function CreateRewardContent() {
                                 <button
                                   key={iss.number}
                                   type="button"
-                                  onClick={() => setSelectedIssue(iss)}
+                                  onClick={() => {
+                                    setSelectedIssue(iss);
+                                    if (!title) setTitle(iss.title);
+                                  }}
                                   className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-surface-2 ${
                                     isSelected
                                       ? "bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] border-l-2 border-l-accent"
