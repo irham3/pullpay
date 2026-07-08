@@ -39,6 +39,7 @@ import {
   Link2,
   Search,
 } from "lucide-react";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 // lucide-react doesn't include brand icons — inline the GitHub mark.
 function GithubIcon({ className, ...props }: React.SVGProps<SVGSVGElement> & { strokeWidth?: number }) {
@@ -102,6 +103,9 @@ function CreateRewardContent() {
     language: string;
     state: string;
   } | null>(null);
+
+  // Modal states
+  const [showGhDisconnect, setShowGhDisconnect] = React.useState(false);
 
   // Shared form state.
   const [title, setTitle] = React.useState("");
@@ -434,15 +438,25 @@ function CreateRewardContent() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          document.cookie = "pullpay_gh=; max-age=0; path=/";
-                          window.location.href = "/create";
-                        }}
+                        onClick={() => setShowGhDisconnect(true)}
                         className="text-xs text-muted hover:text-text transition-colors"
                       >
                         Disconnect
                       </button>
                     </div>
+
+                    <ConfirmModal
+                      isOpen={showGhDisconnect}
+                      onClose={() => setShowGhDisconnect(false)}
+                      onConfirm={() => {
+                        document.cookie = "pullpay_gh=; max-age=0; path=/";
+                        window.location.href = "/create";
+                      }}
+                      title="Disconnect GitHub"
+                      description="Are you sure you want to disconnect your GitHub account? You will need to reconnect to view your repositories."
+                      confirmText="Disconnect"
+                      destructive
+                    />
 
                     {/* Repo picker */}
                     <Field label="Repository" hint={
