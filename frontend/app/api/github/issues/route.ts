@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchIssue } from "@/lib/server/github";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const GH = "https://api.github.com";
 

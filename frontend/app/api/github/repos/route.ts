@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { appOctokit, githubAppConfigured } from "@/lib/server/githubApp";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // GET /api/github/repos?user=<github_login>
 // Returns repos where the PullPay GitHub App is installed and the user has push
