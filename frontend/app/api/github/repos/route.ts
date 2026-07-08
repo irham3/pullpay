@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { appOctokit, githubAppConfigured } from "@/lib/server/githubApp";
+import { appOctokit, githubAppConfigured, installationOctokit } from "@/lib/server/githubApp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,8 +42,8 @@ export async function GET(req: Request) {
       if (!accountLogin) continue;
 
       // Get repos accessible to this installation.
-      const { data } = await octo.apps.listReposAccessibleToInstallation({
-        installation_id: inst.id,
+      const instOcto = installationOctokit(inst.id);
+      const { data } = await instOcto.apps.listReposAccessibleToInstallation({
         per_page: 100,
       });
 
