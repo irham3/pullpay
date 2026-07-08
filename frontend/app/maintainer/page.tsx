@@ -13,7 +13,6 @@ import { BountyCard } from "@/components/bounty/BountyCard";
 import { StatCard } from "@/components/onchain/StatCard";
 import { Button } from "@/components/ui/Button";
 import { ConnectButton } from "@/components/layout/ConnectButton";
-import { RoleTabs } from "@/components/layout/RoleTabs";
 
 export default function MaintainerPage() {
   const { address, isConnected } = useAccount();
@@ -63,8 +62,6 @@ export default function MaintainerPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
-      <RoleTabs />
-
       <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-text">

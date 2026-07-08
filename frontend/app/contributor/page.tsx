@@ -14,7 +14,6 @@ import { BountyCard } from "@/components/bounty/BountyCard";
 import { StatCard } from "@/components/onchain/StatCard";
 import { LinkGithubCard } from "@/components/onchain/LinkGithubCard";
 import { ConnectButton } from "@/components/layout/ConnectButton";
-import { RoleTabs } from "@/components/layout/RoleTabs";
 import { Award, ExternalLink } from "lucide-react";
 
 export default function ContributorPage() {
@@ -68,9 +67,7 @@ export default function ContributorPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
-      <RoleTabs />
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-text">
             Your contributions
