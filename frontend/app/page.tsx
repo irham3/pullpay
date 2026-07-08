@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { HeroStats } from "@/components/HeroStats";
+import { RedirectIfConnected } from "@/components/RedirectIfConnected";
 import {
   ShieldCheck,
   Award,
@@ -14,6 +15,7 @@ import {
 export default function Home() {
   return (
     <main className="flex-1">
+      <RedirectIfConnected />
       {/* Hero */}
       <section className="dot-grid border-b border-border">
         <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
