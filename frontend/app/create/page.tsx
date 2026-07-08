@@ -449,7 +449,7 @@ function CreateRewardContent() {
                       reposLoading
                         ? "Loading repos…"
                         : repos.length === 0
-                          ? "No repos found. Make sure the PullPay App is installed."
+                          ? ""
                           : `${repos.length} repo${repos.length > 1 ? "s" : ""} with PullPay installed`
                     }>
                       <div className="relative">
@@ -468,6 +468,23 @@ function CreateRewardContent() {
                         </select>
                         <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                       </div>
+
+                      {!reposLoading && repos.length === 0 && (
+                        <div className="mt-3 flex flex-col items-center justify-center gap-2 rounded-[8px] border border-dashed border-border bg-muted/5 py-4">
+                          <p className="text-sm text-muted">
+                            PullPay App is not installed on your repos.
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-8 text-xs"
+                            onClick={() => window.open("https://github.com/apps/pullpay-sigma/installations/new", "_blank")}
+                          >
+                            Install App on GitHub
+                            <ExternalLink className="ml-2 h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </Field>
 
                     {/* Issue picker */}
