@@ -12,8 +12,8 @@ import { Menu, X } from "lucide-react";
 
 const NAV = [
   { href: "/bounties", label: "Bounties" },
-  { href: "/create", label: "Create" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/maintainer", label: "Maintainer" },
+  { href: "/contributor", label: "Contributor" },
 ];
 
 export function Header() {

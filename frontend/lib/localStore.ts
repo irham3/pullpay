@@ -35,3 +35,32 @@ export function patchLocalReward(id: string, patch: Partial<Bounty>) {
   all[idx] = { ...all[idx], ...patch };
   localStorage.setItem(KEY, JSON.stringify(all));
 }
+
+// --- "Working on this" — an optional, off-chain, non-binding signal a
+// contributor sets to reduce duplicate work. Never a gate to payment (the model
+// stays permissionless: anyone can just open a PR). Kept per-browser for now;
+// moves to the GitHub App in Phase 2.
+const WORKING_KEY = "pullpay-working-on";
+
+export function loadWorkingOn(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(WORKING_KEY) || "[]") as string[];
+  } catch {
+    return [];
+  }
+}
+
+export function isWorkingOn(id: string): boolean {
+  return loadWorkingOn().some((x) => x.toLowerCase() === id.toLowerCase());
+}
+
+export function toggleWorkingOn(id: string): boolean {
+  const all = loadWorkingOn();
+  const exists = all.some((x) => x.toLowerCase() === id.toLowerCase());
+  const next = exists
+    ? all.filter((x) => x.toLowerCase() !== id.toLowerCase())
+    : [id, ...all];
+  localStorage.setItem(WORKING_KEY, JSON.stringify(next));
+  return !exists;
+}

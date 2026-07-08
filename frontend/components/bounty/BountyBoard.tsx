@@ -10,6 +10,7 @@ import { Search } from "lucide-react";
 import { loadLocalRewards } from "@/lib/localStore";
 import { useOnchainRewards } from "@/hooks/useOnchainRewards";
 import { DEMO_MODE } from "@/lib/contracts/addresses";
+import Link from "next/link";
 
 type StatusFilter = "All" | "Open" | "Verifying" | "Paid" | "Disputed";
 type ModeFilter = "All" | Mode;
@@ -23,7 +24,7 @@ const STATUS_TABS: StatusFilter[] = [
   "Disputed",
 ];
 
-export function BountyBoard({ bounties }: { bounties: Bounty[] }) {
+export function BountyBoard() {
   const [q, setQ] = React.useState("");
   const [status, setStatus] = React.useState<StatusFilter>("All");
   const [mode, setMode] = React.useState<ModeFilter>("All");
@@ -37,14 +38,11 @@ export function BountyBoard({ bounties }: { bounties: Bounty[] }) {
     setLocal(loadLocalRewards());
   }, []);
 
-  // Real rewards indexed from RewardCreated logs (live deployment only).
-  const { data: onchain = [] } = useOnchainRewards();
+  // Real rewards indexed from RewardCreated logs — no sample data, ever.
+  const { data: onchain = [], isLoading: onchainLoading } = useOnchainRewards();
 
   const allBounties = React.useMemo(() => {
-    // On a live deployment, show real (on-chain + local) rewards and drop the
-    // demo sample data; in demo mode fall back to the sample bounties.
-    const base = DEMO_MODE ? bounties : [];
-    const merged = [...onchain, ...local, ...base];
+    const merged = [...onchain, ...local];
     const seen = new Set<string>();
     return merged.filter((b) => {
       const key = b.id.toLowerCase();
@@ -52,7 +50,7 @@ export function BountyBoard({ bounties }: { bounties: Bounty[] }) {
       seen.add(key);
       return true;
     });
-  }, [onchain, local, bounties]);
+  }, [onchain, local]);
 
   const languages = React.useMemo(
     () => ["All", ...Array.from(new Set(allBounties.map((b) => b.language)))],
@@ -167,7 +165,28 @@ export function BountyBoard({ bounties }: { bounties: Bounty[] }) {
           </label>
         </div>
 
-        {filtered.length === 0 ? (
+        {onchainLoading && allBounties.length === 0 ? (
+          <div className="rounded-[10px] border border-dashed border-border p-12 text-center text-sm text-muted">
+            Reading rewards from the chain…
+          </div>
+        ) : allBounties.length === 0 ? (
+          <div className="rounded-[10px] border border-dashed border-border p-12 text-center">
+            <p className="text-sm text-text">No funded bounties yet.</p>
+            <p className="mt-1 text-sm text-muted">
+              {DEMO_MODE
+                ? "No escrow is deployed on this network."
+                : "Be the first — fund a reward against a real GitHub issue."}
+            </p>
+            {!DEMO_MODE && (
+              <Link
+                href="/create"
+                className="mt-4 inline-flex rounded-[6px] bg-accent px-3.5 py-2 text-sm font-medium text-[#0B0B0C] hover:bg-accent-hover"
+              >
+                Create a reward
+              </Link>
+            )}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="rounded-[10px] border border-dashed border-border p-12 text-center text-sm text-muted">
             No bounties match these filters.
           </div>

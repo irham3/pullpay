@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { BountyBoard } from "@/components/bounty/BountyBoard";
-import { MOCK_BOUNTIES } from "@/lib/mock";
 
 export const metadata: Metadata = {
   title: "Bounty board",
@@ -31,7 +30,7 @@ export default function BountiesPage() {
         </Button>
       </div>
 
-      <BountyBoard bounties={MOCK_BOUNTIES} />
+      <BountyBoard />
     </main>
   );
 }

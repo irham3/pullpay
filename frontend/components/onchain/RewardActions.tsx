@@ -15,6 +15,7 @@ import {
 import { useResolveAssertion } from "@/hooks/useBounty";
 import { DEMO_MODE, MOCK_ORACLE } from "@/lib/contracts/addresses";
 import { buildClaim } from "@/lib/rewardId";
+import { WorkingOnButton } from "@/components/onchain/WorkingOnButton";
 import { Loader2, Gavel } from "lucide-react";
 
 export function RewardActions({
@@ -270,15 +271,18 @@ export function RewardActions({
   // --- Contributor discovery / paid states ---
   if (!isMaintainer && bounty.status === "Open") {
     sections.push(
-      <Button key="work" asChild className="w-full">
-        <a
-          href={`https://github.com/${bounty.repo}/issues/${bounty.issueNumber}`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Start working — open the issue ↗
-        </a>
-      </Button>
+      <div key="work" className="space-y-2">
+        <Button asChild className="w-full">
+          <a
+            href={`https://github.com/${bounty.repo}/issues/${bounty.issueNumber}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open the issue on GitHub ↗
+          </a>
+        </Button>
+        <WorkingOnButton id={bounty.id} />
+      </div>
     );
   }
 

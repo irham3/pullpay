@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
-import { CountUp } from "@/components/ui/CountUp";
-import { boardStats } from "@/lib/mock";
+import { HeroStats } from "@/components/HeroStats";
 import {
   ShieldCheck,
   Award,
@@ -13,8 +12,6 @@ import {
 } from "lucide-react";
 
 export default function Home() {
-  const stats = boardStats();
-
   return (
     <main className="flex-1">
       {/* Hero */}
@@ -49,21 +46,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stat row */}
-          <div className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-border bg-border sm:grid-cols-4">
-            <HeroStat label="USDC locked" >
-              <CountUp value={stats.totalLocked} prefix="$" />
-            </HeroStat>
-            <HeroStat label="Paid out">
-              <CountUp value={stats.paidOut} prefix="$" />
-            </HeroStat>
-            <HeroStat label="Open bounties">
-              <CountUp value={stats.openCount} />
-            </HeroStat>
-            <HeroStat label="Settlement erosion">
-              &lt;<CountUp value={1} suffix="%" />
-            </HeroStat>
-          </div>
+          {/* Stat row — real on-chain aggregate */}
+          <HeroStats />
         </div>
       </section>
 
@@ -228,23 +212,6 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
     <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted">
       {children}
     </span>
-  );
-}
-
-function HeroStat({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="bg-surface p-5">
-      <div className="font-mono tnum text-2xl text-text sm:text-3xl">
-        {children}
-      </div>
-      <div className="mt-1 text-xs text-muted">{label}</div>
-    </div>
   );
 }
 

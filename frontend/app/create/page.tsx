@@ -61,8 +61,10 @@ export default function CreateRewardPage() {
   const { approve } = useApproveUsdc();
   const { createReward } = useCreateReward();
 
+  // Verify the issue exists on GitHub — a reward must map to a real issue.
+  // Returns the metadata (also stored) or null if it doesn't exist.
   async function fetchIssueMeta() {
-    if (!repo.includes("/") || !Number(issue)) return;
+    if (!repo.includes("/") || !Number(issue)) return null;
     setMetaState("loading");
     try {
       const res = await fetch(
@@ -70,11 +72,20 @@ export default function CreateRewardPage() {
       );
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setMeta({ labels: data.labels ?? [], language: data.language ?? "" });
-      if (!title && data.title) setTitle(data.title);
+      const m = {
+        labels: data.labels ?? [],
+        language: data.language ?? "",
+        title: data.title ?? "",
+        state: data.state ?? "open",
+      };
+      setMeta({ labels: m.labels, language: m.language });
+      if (!title && m.title) setTitle(m.title);
       setMetaState("ok");
+      return m;
     } catch {
       setMetaState("error");
+      setMeta(null);
+      return null;
     }
   }
 
@@ -92,6 +103,15 @@ export default function CreateRewardPage() {
     e.preventDefault();
     setError(null);
     if (!valid) return;
+
+    // A reward must point to a real GitHub issue — verify before locking funds.
+    const verified = meta ? { state: "ok" } : await fetchIssueMeta();
+    if (!verified) {
+      setError(
+        `Issue ${repo}#${issue} not found on GitHub. Fund only real, existing issues.`
+      );
+      return;
+    }
 
     const id = computeRewardId(repo, Number(issue));
     const amountParsed = parseUnits(amount, USDC_DECIMALS);
@@ -153,6 +173,12 @@ export default function CreateRewardPage() {
         deadline,
       });
       persist(txHash as `0x${string}`);
+      // Link issue → reward so the GitHub App webhook can find it instantly.
+      fetch("/api/reward/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rewardId: id, repo, issue: Number(issue) }),
+      }).catch(() => {});
       setCreatedId(id);
       setStep("done");
     } catch (err) {

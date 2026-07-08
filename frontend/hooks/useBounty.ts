@@ -13,7 +13,6 @@ import {
 } from "@/lib/contracts/addresses";
 import { CONTRACT_STATUS, contractStatusToUi } from "@/lib/status";
 import type { Bounty, Mode } from "@/lib/types";
-import { getBounty } from "@/lib/mock";
 import { getLocalReward } from "@/lib/localStore";
 
 type FullRecord = readonly [
@@ -36,7 +35,6 @@ const ZERO = "0x0000000000000000000000000000000000000000";
 // Resolve a bounty by id across three sources: demo mock → local created cache →
 // live on-chain (getReward / rewards). Returns a unified Bounty for the UI.
 export function useBounty(id: `0x${string}`) {
-  const mock = getBounty(id);
   const [local, setLocal] = React.useState<Bounty | undefined>(undefined);
   const [mountTs, setMountTs] = React.useState(0);
 
@@ -51,12 +49,10 @@ export function useBounty(id: `0x${string}`) {
     abi: PULLPAY_ESCROW_ABI,
     functionName: "rewards",
     args: [id],
-    query: { enabled: !DEMO_MODE && !mock },
+    query: { enabled: !DEMO_MODE },
   });
 
   const bounty = React.useMemo<Bounty | undefined>(() => {
-    if (mock) return mock;
-
     const rec = onchain.data as FullRecord | undefined;
     const onchainExists = rec && rec[0] !== ZERO;
 
@@ -86,7 +82,7 @@ export function useBounty(id: `0x${string}`) {
     }
 
     return local;
-  }, [mock, onchain.data, local, id, mountTs]);
+  }, [onchain.data, local, id, mountTs]);
 
   const assertionId =
     (onchain.data as FullRecord | undefined)?.[9] ??
@@ -95,7 +91,7 @@ export function useBounty(id: `0x${string}`) {
   return {
     bounty,
     assertionId,
-    isLoading: !DEMO_MODE && !mock && onchain.isLoading,
+    isLoading: !DEMO_MODE && onchain.isLoading,
     refetch: onchain.refetch,
     isOnchain: Boolean((onchain.data as FullRecord | undefined)?.[0] && (onchain.data as FullRecord)[0] !== ZERO),
   };

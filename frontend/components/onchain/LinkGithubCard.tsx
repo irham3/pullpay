@@ -13,10 +13,21 @@ export function LinkGithubCard() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const [handle, setHandle] = React.useState("");
+  const [verified, setVerified] = React.useState(false);
   const [state, setState] = React.useState<"idle" | "signing" | "ok" | "error">(
     "idle"
   );
   const [msg, setMsg] = React.useState<string | null>(null);
+
+  // Prefill from the GitHub OAuth callback cookie (verified identity).
+  React.useEffect(() => {
+    const m = document.cookie.match(/(?:^|;\s*)pullpay_gh=([^;]+)/);
+    if (m) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- read verified handle on mount
+      setHandle(decodeURIComponent(m[1]));
+      setVerified(true);
+    }
+  }, []);
 
   if (!isConnected) return null;
 
@@ -52,11 +63,27 @@ export function LinkGithubCard() {
         So the relayer pays you when your merged PR settles. Receiving costs no
         gas — this just proves the wallet is yours.
       </p>
+
+      {verified ? (
+        <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-ok">
+          <Check className="h-3.5 w-3.5" strokeWidth={2} /> GitHub identity
+          verified — @{handle}
+        </p>
+      ) : (
+        <a
+          href="/api/github/login"
+          className="mt-2 inline-block text-xs text-accent hover:underline"
+        >
+          Verify with GitHub → (recommended)
+        </a>
+      )}
+
       <div className="mt-3 flex gap-2">
         <Input
           value={handle}
           onChange={(e) => setHandle(e.target.value.replace(/^@/, ""))}
           placeholder="your-github-username"
+          readOnly={verified}
         />
         <Button
           onClick={link}

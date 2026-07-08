@@ -6,9 +6,10 @@ import {
   type Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { parseAbiItem } from "viem";
 import { serverChain, rpcUrl } from "./chain";
 import { PULLPAY_ESCROW_ABI } from "@/lib/contracts/PullPayEscrow";
-import { ESCROW_ADDRESS } from "@/lib/contracts/addresses";
+import { ESCROW_ADDRESS, DEPLOY_BLOCK } from "@/lib/contracts/addresses";
 
 export const publicClient = createPublicClient({
   chain: serverChain,
@@ -70,4 +71,39 @@ export async function readRewardMode(id: `0x${string}`): Promise<number> {
     args: [id],
   })) as readonly unknown[];
   return Number(r[7]);
+}
+
+const REWARD_CREATED = parseAbiItem(
+  "event RewardCreated(bytes32 indexed id, address indexed maintainer, uint256 amount)"
+);
+
+// Scan RewardCreated logs to find a Funded reward matching a repo+issue when
+// the store has no explicit link (nonce makes the id underivable otherwise).
+export async function findRewardIdForIssue(
+  repo: string,
+  issue: number
+): Promise<`0x${string}` | null> {
+  const logs = await publicClient.getLogs({
+    address: ESCROW_ADDRESS,
+    event: REWARD_CREATED,
+    fromBlock: DEPLOY_BLOCK,
+    toBlock: "latest",
+  });
+  const ids = Array.from(new Set(logs.map((l) => l.args.id as `0x${string}`)));
+  for (const id of ids) {
+    try {
+      const r = (await publicClient.readContract({
+        ...escrow,
+        functionName: "rewards",
+        args: [id],
+      })) as readonly unknown[];
+      const matchRepo = String(r[4]).toLowerCase() === repo.toLowerCase();
+      const matchIssue = Number(r[5] as bigint) === issue;
+      const funded = Number(r[11]) === 1;
+      if (matchRepo && matchIssue && funded) return id;
+    } catch {
+      // skip unreadable record
+    }
+  }
+  return null;
 }
