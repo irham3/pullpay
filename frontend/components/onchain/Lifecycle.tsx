@@ -2,12 +2,10 @@ import { Check } from "lucide-react";
 import { LIFECYCLE, type UiStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-// Reward lifecycle stepper (PRD §25.2). Highlights the reached phase; terminal
-// off-path states (Disputed / Rejected / Refunded) render as a callout row.
 const OFF_PATH: Record<string, { label: string; tone: string }> = {
-  Disputed: { label: "Disputed — DVM voting in progress", tone: "var(--bad)" },
-  Rejected: { label: "Rejected — funds returned to funder", tone: "var(--bad)" },
-  Refunded: { label: "Refunded — deadline passed", tone: "var(--muted)" },
+  Disputed: { label: "Disputed - UMA is resolving it", tone: "var(--bad)" },
+  Rejected: { label: "Rejected - funds returned", tone: "var(--bad)" },
+  Refunded: { label: "Refunded - deadline passed", tone: "var(--muted)" },
   "Changes Requested": {
     label: "Changes requested on the PR",
     tone: "var(--warn)",
@@ -16,7 +14,6 @@ const OFF_PATH: Record<string, { label: string; tone: string }> = {
 
 export function Lifecycle({ status }: { status: UiStatus }) {
   const offPath = OFF_PATH[status];
-  // Where on the happy path are we? Verifying maps between Merged and Paid.
   const activeIndex = (() => {
     if (status === "Paid") return LIFECYCLE.length - 1;
     if (status === "Disputed") return LIFECYCLE.indexOf("Verifying");
@@ -29,7 +26,7 @@ export function Lifecycle({ status }: { status: UiStatus }) {
   return (
     <div className="rounded-[10px] border border-border bg-surface p-5">
       <div className="mb-4 text-[11px] font-medium uppercase tracking-wider text-muted">
-        Lifecycle
+        Reward status
       </div>
       <ol className="space-y-0">
         {LIFECYCLE.map((phase, i) => {
@@ -48,7 +45,10 @@ export function Lifecycle({ status }: { status: UiStatus }) {
                   )}
                   style={
                     current
-                      ? { boxShadow: "0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent)" }
+                      ? {
+                          boxShadow:
+                            "0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent)",
+                        }
                       : undefined
                   }
                 >
@@ -72,7 +72,11 @@ export function Lifecycle({ status }: { status: UiStatus }) {
                 <div
                   className={cn(
                     "text-sm",
-                    current ? "text-text font-medium" : done ? "text-text" : "text-muted"
+                    current
+                      ? "text-text font-medium"
+                      : done
+                        ? "text-text"
+                        : "text-muted"
                   )}
                 >
                   {phase}
@@ -87,8 +91,10 @@ export function Lifecycle({ status }: { status: UiStatus }) {
         <div
           className="mt-2 flex items-center gap-2 rounded-[6px] border px-3 py-2 text-sm"
           style={{
-            borderColor: "color-mix(in srgb, " + offPath.tone + " 40%, transparent)",
-            background: "color-mix(in srgb, " + offPath.tone + " 8%, transparent)",
+            borderColor:
+              "color-mix(in srgb, " + offPath.tone + " 40%, transparent)",
+            background:
+              "color-mix(in srgb, " + offPath.tone + " 8%, transparent)",
           }}
         >
           <span

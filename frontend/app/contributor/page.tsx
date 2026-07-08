@@ -33,9 +33,9 @@ export default function ContributorPage() {
   const pool = React.useMemo(() => {
     const seen = new Set<string>();
     return [...onchain, ...local].filter((b) => {
-      const k = b.id.toLowerCase();
-      if (seen.has(k)) return false;
-      seen.add(k);
+      const key = b.id.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
   }, [onchain, local]);
@@ -52,19 +52,29 @@ export default function ContributorPage() {
           Contributor
         </h1>
         <p className="max-w-sm text-sm text-muted">
-          Connect your wallet to link your GitHub, track work, and see your
-          earnings & reputation.
+          Connect your wallet, link GitHub, and track payouts from merged PRs.
         </p>
         <ConnectButton />
         <Link
           href="/bounties"
           className="text-sm text-muted underline-offset-4 hover:text-text hover:underline"
         >
-          or browse open bounties
+          Browse funded issues
         </Link>
       </main>
     );
   }
+
+  // Cek apakah user masih baru (belum ada aktivitas apapun)
+  const isNewUser = working.length === 0 && attestations.length === 0;
+
+  // Cek apakah GitHub sudah di-link (baca dari cookie)
+  const [githubLinked, setGithubLinked] = React.useState(false);
+  React.useEffect(() => {
+    const m = document.cookie.match(/(?:^|;\s*)pullpay_gh=([^;]+)/);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read cookie on mount
+    setGithubLinked(Boolean(m));
+  }, []);
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
@@ -73,55 +83,116 @@ export default function ContributorPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-text">
-            Your contributions
+            Contributor dashboard
           </h1>
+          <p className="mt-1 text-sm text-muted">
+            Link GitHub, work on funded issues, and receive USDC after merge.
+          </p>
 
+          {/* Stats row */}
           <div className="mt-6 grid grid-cols-3 gap-3">
             <StatCard label="Earned">{usd(profile?.totalEarned ?? 0)}</StatCard>
-            <StatCard label="Paid contributions">
-              {profile?.contributions ?? 0}
-            </StatCard>
-            <StatCard label="Repositories">{profile?.reposCount ?? 0}</StatCard>
+            <StatCard label="Paid work">{profile?.contributions ?? 0}</StatCard>
+            <StatCard label="Repos">{profile?.reposCount ?? 0}</StatCard>
           </div>
 
-          {/* Working on (local, non-binding signal) */}
-          <div className="mt-8">
-            <h2 className="text-sm font-medium text-text">Working on</h2>
-            <p className="mt-1 text-xs text-muted">
-              Bounties you flagged. Just a signal to avoid duplicate work — you
-              still get paid by opening a PR, no permission needed.
-            </p>
-            {working.length === 0 ? (
-              <div className="mt-3 rounded-[10px] border border-dashed border-border p-8 text-center text-sm text-muted">
-                Nothing yet.{" "}
-                <Link href="/bounties" className="text-text hover:underline">
-                  Find a bounty
-                </Link>{" "}
-                and mark it.
+          {/* Onboarding checklist — hanya tampil saat user baru */}
+          {isNewUser && (
+            <div className="mt-8 overflow-hidden rounded-[10px] border border-border bg-surface">
+              <div className="border-b border-border px-5 py-3 text-[11px] font-medium uppercase tracking-wider text-muted">
+                Get started — 4 steps to your first payout
               </div>
-            ) : (
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {working.map((b) => (
-                  <BountyCard key={b.id} bounty={b} />
-                ))}
-              </div>
-            )}
-          </div>
+              <ol className="divide-y divide-border">
+                <ChecklistItem
+                  n={1}
+                  done
+                  label="Connect wallet"
+                  detail="Your wallet is connected and ready to receive USDC."
+                />
+                <ChecklistItem
+                  n={2}
+                  done={githubLinked}
+                  label="Link GitHub to this wallet"
+                  detail={
+                    githubLinked
+                      ? "GitHub linked — payouts will go to this wallet."
+                      : "PullPay uses this to send USDC to the right wallet after your PR is merged."
+                  }
+                  urgent={!githubLinked}
+                  action={
+                    !githubLinked
+                      ? { href: "/api/github/login", label: "Link GitHub" }
+                      : undefined
+                  }
+                />
+                <ChecklistItem
+                  n={3}
+                  done={false}
+                  label="Browse funded issues"
+                  detail="Pick an open issue with a USDC reward attached and start working."
+                  action={{ href: "/bounties", label: "Browse rewards", internal: true }}
+                />
+                <ChecklistItem
+                  n={4}
+                  done={false}
+                  label="Open a PR and get it merged"
+                  detail="After merge, PullPay verifies it and sends USDC directly to your wallet. You pay zero gas."
+                />
+              </ol>
+            </div>
+          )}
 
-          {/* Reputation */}
+          {/* Marked work — tampil saat ada aktivitas */}
+          {!isNewUser && (
+            <div className="mt-8">
+              <h2 className="text-sm font-medium text-text">Marked work</h2>
+              <p className="mt-1 text-xs text-muted">
+                Issues you marked for yourself. Payment still requires a merged PR
+                and a completed payout.
+              </p>
+              {working.length === 0 ? (
+                <div className="mt-3 rounded-[10px] border border-dashed border-border p-8 text-center text-sm text-muted">
+                  Nothing yet.{" "}
+                  <Link href="/bounties" className="text-text hover:underline">
+                    Find a funded issue
+                  </Link>
+                  .
+                </div>
+              ) : (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {working.map((b) => (
+                    <BountyCard
+                      key={b.id}
+                      repoName={b.repo}
+                      issueTitle={b.issueTitle}
+                      bountyAmount={b.amount}
+                      walletAddress={b.contributor ?? b.maintainer}
+                      issueNumber={b.issueNumber}
+                      labels={[b.language, ...b.labels]}
+                      mode={b.mode}
+                      status={b.status}
+                      href={`/reward/${b.id}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Paid work */}
           <div className="mt-8">
             <div className="mb-3 flex items-center gap-2">
               <Award className="h-4 w-4 text-accent" strokeWidth={1.5} />
-              <h2 className="text-sm font-medium text-text">
-                Reputation (EAS)
-              </h2>
+              <h2 className="text-sm font-medium text-text">Paid work</h2>
             </div>
             {attestations.length === 0 ? (
-              <div className="rounded-[10px] border border-dashed border-border p-8 text-center text-sm text-muted">
-                {DEMO_MODE
-                  ? "No escrow deployed."
-                  : "No paid contributions yet — they appear here once a reward settles."}
-              </div>
+              !isNewUser && (
+                <div className="rounded-[10px] border border-dashed border-border p-8 text-center text-sm text-muted">
+                  {DEMO_MODE
+                    ? "No escrow deployed."
+                    : "No paid work yet. It appears here after payout completes."}
+                </div>
+              )
             ) : (
               <div className="overflow-hidden rounded-[10px] border border-border bg-surface">
                 <table className="w-full text-sm">
@@ -136,7 +207,7 @@ export default function ContributorPage() {
                           {usd(a.amount)}
                         </td>
                         <td className="px-4 py-3 text-right text-muted">
-                          {a.date ? timeFromNow(a.date) : "—"}
+                          {a.date ? timeFromNow(a.date) : "-"}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <a
@@ -161,15 +232,102 @@ export default function ContributorPage() {
         <div className="space-y-6">
           <LinkGithubCard />
           <div className="rounded-[10px] border border-border bg-surface p-5 text-sm">
-            <div className="font-medium text-text">Get paid</div>
+            <div className="font-medium text-text">How to get paid</div>
             <ol className="mt-2 space-y-1.5 text-muted">
-              <li>1. Link your GitHub above.</li>
-              <li>2. Open a PR that resolves the issue.</li>
-              <li>3. On merge, USDC lands in your wallet — no gas.</li>
+              <li>1. Link GitHub to this wallet.</li>
+              <li>2. Open a PR for a funded issue.</li>
+              <li>3. After merge, receive USDC. You pay no gas.</li>
             </ol>
           </div>
         </div>
       </div>
     </main>
+  );
+}
+
+// Sub-komponen: satu langkah onboarding di checklist
+function ChecklistItem({
+  n,
+  done,
+  label,
+  detail,
+  urgent,
+  action,
+}: {
+  n: number;
+  done: boolean;
+  label: string;
+  detail: string;
+  urgent?: boolean;
+  action?: { href: string; label: string; internal?: boolean };
+}) {
+  return (
+    <li
+      className={`flex gap-4 px-5 py-4 transition-colors ${
+        urgent ? "bg-[color-mix(in_srgb,var(--accent)_5%,transparent)]" : ""
+      }`}
+    >
+      {/* Badge nomor / centang */}
+      <span
+        className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${
+          done
+            ? "border-ok text-ok"
+            : urgent
+              ? "border-accent text-accent shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_15%,transparent)]"
+              : "border-border text-muted"
+        }`}
+      >
+        {done ? (
+          <svg viewBox="0 0 12 12" fill="none" className="h-3.5 w-3.5">
+            <path
+              d="M2 6l3 3 5-5"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ) : (
+          n
+        )}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`text-sm font-medium ${
+              done ? "text-muted line-through decoration-muted/50" : "text-text"
+            }`}
+          >
+            {label}
+          </span>
+          {urgent && (
+            <span className="rounded-full border border-accent/30 bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent">
+              required
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 text-xs leading-5 text-muted">{detail}</p>
+        {action && !done && (
+          <div className="mt-2">
+            {action.internal ? (
+              <Link
+                href={action.href}
+                className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+              >
+                {action.label} →
+              </Link>
+            ) : (
+              <a
+                href={action.href}
+                className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+              >
+                {action.label} →
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    </li>
   );
 }

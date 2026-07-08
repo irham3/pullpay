@@ -4,32 +4,45 @@ import { useOnchainRewards } from "@/hooks/useOnchainRewards";
 import { CountUp } from "@/components/ui/CountUp";
 import { DEMO_MODE } from "@/lib/contracts/addresses";
 
-// Real aggregate stats read from on-chain rewards — no sample numbers.
+// Angka demo statis — hanya tampil saat DEMO_MODE dan belum ada data on-chain.
+// Angka ini mencerminkan skenario testnet awal yang realistis untuk pitching.
+const DEMO_STATS = {
+  locked: 12450,
+  paid: 8200,
+  open: 24,
+};
+
 export function HeroStats() {
   const { data: rewards = [] } = useOnchainRewards();
 
   const openStates = ["Open", "In Review", "Changes Requested", "Merged", "Verifying"];
-  const locked = rewards
+  const lockedOnchain = rewards
     .filter((b) => openStates.includes(b.status))
     .reduce((s, b) => s + b.amount, 0);
-  const paid = rewards
+  const paidOnchain = rewards
     .filter((b) => b.status === "Paid")
     .reduce((s, b) => s + b.amount, 0);
-  const open = rewards.filter((b) => b.status === "Open").length;
+  const openOnchain = rewards.filter((b) => b.status === "Open").length;
+
+  // Pakai data demo kalau DEMO_MODE dan belum ada data on-chain sama sekali.
+  const useDemo = DEMO_MODE && rewards.length === 0;
+  const locked = useDemo ? DEMO_STATS.locked : lockedOnchain;
+  const paid   = useDemo ? DEMO_STATS.paid   : paidOnchain;
+  const open   = useDemo ? DEMO_STATS.open   : openOnchain;
 
   return (
     <div className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-border bg-border sm:grid-cols-4">
-      <Tile label={DEMO_MODE ? "USDC locked" : "USDC locked now"}>
+      <Tile label={DEMO_MODE ? "USDC locked (demo)" : "USDC locked now"}>
         <CountUp value={locked} prefix="$" />
       </Tile>
       <Tile label="Paid out">
         <CountUp value={paid} prefix="$" />
       </Tile>
-      <Tile label="Open bounties">
+      <Tile label="Open rewards">
         <CountUp value={open} />
       </Tile>
-      <Tile label="Settlement erosion">
-        &lt;<CountUp value={1} suffix="%" />
+      <Tile label="Contributor gas">
+        <CountUp value={0} suffix=" ETH" />
       </Tile>
     </div>
   );

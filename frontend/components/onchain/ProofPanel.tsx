@@ -4,8 +4,7 @@ import type { Bounty } from "@/lib/types";
 import { ESCROW_ADDRESS } from "@/lib/contracts/addresses";
 import { explorerAddr } from "@/lib/explorer";
 
-// Proof of Funding (PRD §28 / F11): every bounty exposes contract-level proof so
-// a contributor can confirm funds are locked before starting work.
+// Shows that funds are locked before a contributor starts work.
 export function ProofPanel({ bounty }: { bounty: Bounty }) {
   const funded = ["Open", "In Review", "Changes Requested", "Merged"].includes(
     bounty.status
@@ -17,8 +16,8 @@ export function ProofPanel({ bounty }: { bounty: Bounty }) {
         <ShieldCheck className="h-4 w-4 text-ok" strokeWidth={1.75} />
         <span className="text-sm font-medium text-text">
           {funded
-            ? `Funded — ${bounty.amount} ${bounty.token} locked on-chain`
-            : `Escrow record — ${bounty.amount} ${bounty.token}`}
+            ? `${bounty.amount} ${bounty.token} is locked for this issue`
+            : `${bounty.amount} ${bounty.token} escrow record`}
         </span>
       </div>
       <dl className="divide-y divide-border text-sm">
@@ -41,7 +40,7 @@ export function ProofPanel({ bounty }: { bounty: Bounty }) {
               rel="noreferrer"
               className="font-mono text-sm text-text hover:text-accent"
             >
-              {ESCROW_ADDRESS.slice(0, 10)}… ↗
+              {ESCROW_ADDRESS.slice(0, 10)}... open
             </a>
           )}
         </Row>
@@ -50,12 +49,8 @@ export function ProofPanel({ bounty }: { bounty: Bounty }) {
         </Row>
       </dl>
       <p className="border-t border-border px-4 py-3 text-xs text-muted">
-        Recompute the ID from{" "}
-        <span className="font-mono">
-          keccak256(repo, issue, nonce)
-        </span>{" "}
-        and read <span className="font-mono">getReward(id)</span> on any RPC — no
-        trust in PullPay required.
+        This proves the reward exists on-chain. Contributors can check the
+        escrow before starting work.
       </p>
     </div>
   );

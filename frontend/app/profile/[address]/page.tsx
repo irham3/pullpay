@@ -9,8 +9,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { address } = await params;
   return {
-    title: `${truncateAddr(address)} — contributor reputation`,
-    description: `On-chain contribution reputation built from EAS attestations for ${truncateAddr(address)}.`,
+    title: `${truncateAddr(address)} - contributor profile`,
+    description: `Paid contribution proof for ${truncateAddr(address)}.`,
   };
 }
 

@@ -6,12 +6,12 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { ConnectButton } from "./ConnectButton";
-import { ThemeToggle } from "./ThemeToggle";
 import { NetworkBanner } from "./NetworkBanner";
 import { Menu, X } from "lucide-react";
 
 const NAV = [
-  { href: "/bounties", label: "Bounties" },
+  { href: "/docs", label: "Docs" },
+  { href: "/bounties", label: "Rewards" },
   { href: "/maintainer", label: "Maintainer" },
   { href: "/contributor", label: "Contributor" },
 ];
@@ -49,7 +49,6 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
           <ConnectButton />
           <button
             type="button"

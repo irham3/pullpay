@@ -8,11 +8,11 @@ import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: {
-    default: "PullPay — Trust-minimized open source rewards",
-    template: "%s · PullPay",
+    default: "PullPay - Open source rewards on Optimism",
+    template: "%s | PullPay",
   },
   description:
-    "Merge the PR, the contributor gets paid in USDC — verified without an intermediary (UMA), settled without gas, and recorded as on-chain reputation (EAS). On Optimism.",
+    "Maintainers lock USDC for GitHub issues. Contributors get paid after a merged PR without paying gas to receive the payout.",
 };
 
 export default function RootLayout({

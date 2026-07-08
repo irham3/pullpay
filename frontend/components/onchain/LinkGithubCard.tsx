@@ -6,9 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Link2, Check, Loader2 } from "lucide-react";
 
-// Contributor links their GitHub username → wallet by signing an ownership
-// message (SIWE-style, PRD §30.5). The relayer uses this mapping to pay the
-// right wallet when a PR by that author merges.
+// Links a contributor's verified GitHub account to the wallet that receives USDC.
 export function LinkGithubCard() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
@@ -19,7 +17,6 @@ export function LinkGithubCard() {
   );
   const [msg, setMsg] = React.useState<string | null>(null);
 
-  // Prefill from the GitHub OAuth callback cookie (verified identity).
   React.useEffect(() => {
     const m = document.cookie.match(/(?:^|;\s*)pullpay_gh=([^;]+)/);
     if (m) {
@@ -46,7 +43,7 @@ export function LinkGithubCard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "link failed");
       setState("ok");
-      setMsg(`Linked @${handle} → ${address.slice(0, 6)}…`);
+      setMsg(`Linked @${handle} to ${address.slice(0, 6)}...`);
     } catch (e) {
       setState("error");
       setMsg(e instanceof Error ? e.message : "link failed");
@@ -57,24 +54,24 @@ export function LinkGithubCard() {
     <div className="rounded-[10px] border border-border bg-surface p-5">
       <div className="flex items-center gap-2 text-sm font-medium text-text">
         <Link2 className="h-4 w-4 text-muted" strokeWidth={1.5} />
-        Link GitHub → wallet
+        Link GitHub to wallet
       </div>
       <p className="mt-1.5 text-xs text-muted">
-        So the relayer pays you when your merged PR settles. Receiving costs no
-        gas — this just proves the wallet is yours.
+        PullPay uses this to send USDC to the right contributor after merge.
+        Receiving the payout costs you no gas.
       </p>
 
       {verified ? (
         <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-ok">
           <Check className="h-3.5 w-3.5" strokeWidth={2} /> GitHub identity
-          verified — @{handle}
+          verified - @{handle}
         </p>
       ) : (
         <a
           href="/api/github/login"
           className="mt-2 inline-block text-xs text-accent hover:underline"
         >
-          Verify with GitHub → (recommended)
+          Verify with GitHub (recommended)
         </a>
       )}
 

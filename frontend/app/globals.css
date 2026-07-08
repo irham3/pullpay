@@ -1,35 +1,20 @@
 @import "tailwindcss";
 
-/* Dark-first: :root = dark. Light theme via [data-theme="light"]. */
 :root {
-  --bg: #0E0F13;
-  --surface: #181A20;
-  --surface-2: #1F2229;
-  --border: rgba(255, 255, 255, 0.07);
-  --text: #E6E7EB;
-  --muted: #9498A3;
-  --accent: #7C8CFF;
-  --accent-hover: #93A0FF;
-  --ok: #4ADE80;
+  --bg: #0B0F14;
+  --surface: rgba(30, 35, 41, 0.82);
+  --surface-2: #262C33;
+  --border: rgba(66, 133, 244, 0.18);
+  --text: #F4F7FB;
+  --muted: #AAB4C0;
+  --accent: #4285F4;
+  --accent-hover: #6EA8FF;
+  --ok: #4285F4;
   --warn: #E0B341;
-  --bad: #F0715E;
+  --bad: #FF0420;
 
   --radius-card: 10px;
   --radius-input: 6px;
-}
-
-[data-theme="light"] {
-  --bg: #FBFBFD;
-  --surface: #FFFFFF;
-  --surface-2: #F4F5F7;
-  --border: #E7E8EC;
-  --text: #1A1B1F;
-  --muted: #6B6F7A;
-  --accent: #5A67E8;
-  --accent-hover: #4C58D6;
-  --ok: #12B76A;
-  --warn: #D9A404;
-  --bad: #E5533C;
 }
 
 @theme inline {
@@ -68,13 +53,78 @@ body {
   font-family: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-/* Latar dot-grid sangat samar (~3%) */
 .dot-grid {
-  background-image: radial-gradient(var(--dot-color, rgba(255, 255, 255, 0.06)) 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot-color, rgba(66, 133, 244, 0.14)) 1px, transparent 1px);
   background-size: 22px 22px;
 }
-[data-theme="light"] .dot-grid {
-  --dot-color: rgba(0, 0, 0, 0.05);
+
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    radial-gradient(rgba(66, 133, 244, 0.18) 1px, transparent 1px);
+  background-size: 64px 64px, 64px 64px, 24px 24px;
+  animation: grid-drift 28s linear infinite;
+}
+
+.section-grid {
+  background-image:
+    linear-gradient(rgba(66, 133, 244, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(66, 133, 244, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  animation: section-grid-drift 36s linear infinite;
+}
+
+.terminal-scanline {
+  position: relative;
+}
+
+.terminal-scanline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(66, 133, 244, 0.12) 50%,
+    transparent 100%
+  );
+  height: 120px;
+  transform: translateY(-140px);
+  animation: terminal-scanline 5.5s ease-in-out infinite;
+}
+
+@keyframes grid-drift {
+  from {
+    background-position: 0 0, 0 0, 0 0;
+  }
+  to {
+    background-position: 64px 64px, 64px 64px, 24px 24px;
+  }
+}
+
+@keyframes section-grid-drift {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 56px 56px, 56px 56px;
+  }
+}
+
+@keyframes terminal-scanline {
+  0%, 14% {
+    transform: translateY(-140px);
+    opacity: 0;
+  }
+  35%, 65% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(440px);
+    opacity: 0;
+  }
 }
 
 /* Hairline separators that follow the light divider fade at the edges. */
@@ -136,7 +186,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .shiny,
-  .live-dot {
+  .live-dot,
+  .hero-grid,
+  .section-grid,
+  .terminal-scanline::after {
     animation: none;
   }
   .reveal {

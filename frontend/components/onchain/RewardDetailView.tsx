@@ -14,8 +14,6 @@ import { LANG_COLORS } from "@/lib/languages";
 import { timeFromNow } from "@/lib/format";
 import { ArrowLeft, ExternalLink, GitPullRequest } from "lucide-react";
 
-// Presentational reward detail — no data fetching, so it renders on the server
-// (demo mock) or inside a client loader (live on-chain) with identical markup.
 export function RewardDetailView({
   bounty,
   assertionId,
@@ -30,7 +28,7 @@ export function RewardDetailView({
         className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-text"
       >
         <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
-        Bounty board
+        Rewards
       </Link>
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
@@ -87,7 +85,7 @@ export function RewardDetailView({
                   rel="noreferrer"
                   className="font-mono text-text hover:text-accent"
                 >
-                  {bounty.repo} #{bounty.prNumber} ↗
+                  {bounty.repo} #{bounty.prNumber}
                 </a>
                 {bounty.contributorHandle && (
                   <span className="text-muted">
@@ -100,14 +98,13 @@ export function RewardDetailView({
 
           <DisputePanel bounty={bounty} />
 
-          {/* pullpay.yml wiring — shown to the maintainer to drop into the repo. */}
           {["Open", "In Review", "Changes Requested", "Merged"].includes(
             bounty.status
           ) && <YamlPanel bounty={bounty} />}
 
           <div className="rounded-[10px] border border-border bg-surface">
             <div className="border-b border-border px-4 py-3 text-sm font-medium text-text">
-              Details
+              Reward details
             </div>
             <dl className="divide-y divide-border text-sm">
               <MetaRow label="Mode">
@@ -148,7 +145,7 @@ export function RewardDetailView({
           <Lifecycle status={bounty.status} />
           <div className="rounded-[10px] border border-border bg-surface p-5">
             <div className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted">
-              Actions
+              What you can do
             </div>
             <RewardActions bounty={bounty} assertionId={assertionId} />
           </div>

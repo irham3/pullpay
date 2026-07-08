@@ -36,23 +36,23 @@ export function ProfileView({ address }: { address: string }) {
 
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard label="Total earned">
-          {isLoading ? "—" : usd(profile?.totalEarned ?? 0)}
+          {isLoading ? "-" : usd(profile?.totalEarned ?? 0)}
         </StatCard>
-        <StatCard label="Contributions">
-          {isLoading ? "—" : (profile?.contributions ?? 0)}
+        <StatCard label="Paid PRs">
+          {isLoading ? "-" : (profile?.contributions ?? 0)}
         </StatCard>
-        <StatCard label="Repositories">
-          {isLoading ? "—" : (profile?.reposCount ?? 0)}
+        <StatCard label="Repos">
+          {isLoading ? "-" : (profile?.reposCount ?? 0)}
         </StatCard>
       </div>
 
       <div className="mt-10">
         <div className="mb-4 flex items-center gap-2">
           <Award className="h-4 w-4 text-accent" strokeWidth={1.5} />
-          <h2 className="text-sm font-medium text-text">EAS attestations</h2>
-          <span className="text-xs text-muted">
-            portable, verifiable, on-chain
-          </span>
+          <h2 className="text-sm font-medium text-text">
+            Paid contribution proof
+          </h2>
+          <span className="text-xs text-muted">recorded on-chain with EAS</span>
         </div>
 
         {isLoading ? (
@@ -64,7 +64,7 @@ export function ProfileView({ address }: { address: string }) {
           <div className="rounded-[10px] border border-dashed border-border p-12 text-center text-sm text-muted">
             {DEMO_MODE
               ? "No escrow deployed on this network."
-              : `No paid contributions yet for ${truncateAddr(address)}. They appear here once a reward settles.`}
+              : `No paid PRs yet for ${truncateAddr(address)}.`}
           </div>
         ) : (
           <div className="overflow-hidden rounded-[10px] border border-border bg-surface">
@@ -90,7 +90,7 @@ export function ProfileView({ address }: { address: string }) {
                       {usd(a.amount)}
                     </td>
                     <td className="px-4 py-3 text-right text-muted">
-                      {a.date ? timeFromNow(a.date) : "—"}
+                      {a.date ? timeFromNow(a.date) : "-"}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <a

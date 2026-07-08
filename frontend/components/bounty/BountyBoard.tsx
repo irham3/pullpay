@@ -16,12 +16,12 @@ type StatusFilter = "All" | "Open" | "Verifying" | "Paid" | "Disputed";
 type ModeFilter = "All" | Mode;
 type SortKey = "amount" | "recent" | "deadline";
 
-const STATUS_TABS: StatusFilter[] = [
-  "All",
-  "Open",
-  "Verifying",
-  "Paid",
-  "Disputed",
+const STATUS_TABS: { value: StatusFilter; label: string }[] = [
+  { value: "All", label: "All" },
+  { value: "Open", label: "Open" },
+  { value: "Verifying", label: "Checking" },
+  { value: "Paid", label: "Paid" },
+  { value: "Disputed", label: "Disputed" },
 ];
 
 export function BountyBoard() {
@@ -31,14 +31,12 @@ export function BountyBoard() {
   const [lang, setLang] = React.useState<string>("All");
   const [sort, setSort] = React.useState<SortKey>("recent");
 
-  // Merge in rewards created in this browser (no subgraph yet), newest first.
   const [local, setLocal] = React.useState<Bounty[]>([]);
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load local cache on mount
     setLocal(loadLocalRewards());
   }, []);
 
-  // Real rewards indexed from RewardCreated logs — no sample data, ever.
   const { data: onchain = [], isLoading: onchainLoading } = useOnchainRewards();
 
   const allBounties = React.useMemo(() => {
@@ -67,7 +65,12 @@ export function BountyBoard() {
       )
         return false;
       if (status !== "All") {
-        if (status === "Open" && !["Open", "In Review", "Changes Requested", "Merged"].includes(b.status))
+        if (
+          status === "Open" &&
+          !["Open", "In Review", "Changes Requested", "Merged"].includes(
+            b.status
+          )
+        )
           return false;
         if (status !== "Open" && b.status !== (status as UiStatus)) return false;
       }
@@ -83,9 +86,16 @@ export function BountyBoard() {
     return list;
   }, [allBounties, q, status, mode, lang, sort]);
 
+  const lockedAmount = allBounties
+    .filter((b) =>
+      ["Open", "In Review", "Changes Requested", "Merged", "Verifying"].includes(
+        b.status
+      )
+    )
+    .reduce((s, b) => s + b.amount, 0);
+
   return (
     <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-      {/* Filter rail */}
       <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
         <div>
           <div className="relative">
@@ -105,11 +115,11 @@ export function BountyBoard() {
         <FilterGroup label="Status">
           {STATUS_TABS.map((s) => (
             <FilterChip
-              key={s}
-              active={status === s}
-              onClick={() => setStatus(s)}
+              key={s.value}
+              active={status === s.value}
+              onClick={() => setStatus(s.value)}
             >
-              {s}
+              {s.label}
             </FilterChip>
           ))}
         </FilterGroup>
@@ -131,23 +141,14 @@ export function BountyBoard() {
         </FilterGroup>
       </aside>
 
-      {/* Results */}
       <div>
         <div className="mb-4 flex items-center justify-between">
           <span className="text-sm text-muted">
             <span className="tnum text-text">{filtered.length}</span>{" "}
-            {filtered.length === 1 ? "bounty" : "bounties"}
-            <span className="mx-2 text-border">·</span>
+            {filtered.length === 1 ? "reward" : "rewards"}
+            <span className="mx-2 text-border">|</span>
             <span className="font-mono tnum text-text">
-              $
-              {allBounties
-                .filter((b) =>
-                  ["Open", "In Review", "Changes Requested", "Merged", "Verifying"].includes(
-                    b.status
-                  )
-                )
-                .reduce((s, b) => s + b.amount, 0)
-                .toLocaleString("en-US")}
+              ${lockedAmount.toLocaleString("en-US")}
             </span>{" "}
             locked
           </span>
@@ -167,33 +168,87 @@ export function BountyBoard() {
 
         {onchainLoading && allBounties.length === 0 ? (
           <div className="rounded-[10px] border border-dashed border-border p-12 text-center text-sm text-muted">
-            Reading rewards from the chain…
+            Reading funded rewards...
           </div>
         ) : allBounties.length === 0 ? (
-          <div className="rounded-[10px] border border-dashed border-border p-12 text-center">
-            <p className="text-sm text-text">No funded bounties yet.</p>
-            <p className="mt-1 text-sm text-muted">
+          <div className="rounded-[10px] border border-border bg-surface p-6">
+            <p className="mb-5 text-center text-sm text-muted">
               {DEMO_MODE
-                ? "No escrow is deployed on this network."
-                : "Be the first — fund a reward against a real GitHub issue."}
+                ? "No escrow is deployed on this network yet."
+                : "No funded rewards on-chain yet."}
             </p>
-            {!DEMO_MODE && (
-              <Link
-                href="/create"
-                className="mt-4 inline-flex rounded-[6px] bg-accent px-3.5 py-2 text-sm font-medium text-[#0B0B0C] hover:bg-accent-hover"
-              >
-                Create a reward
-              </Link>
-            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Maintainer path */}
+              <div className="flex flex-col gap-3 rounded-[8px] border border-[#4285F4]/20 bg-[color-mix(in_srgb,var(--accent)_5%,transparent)] p-5">
+                <div className="flex items-center gap-2">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#4285F4]/25 bg-bg text-accent">
+                    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth={1.75}>
+                      <path d="M10.5 2.5a8 8 0 1 1 0 16 8 8 0 0 1 0-16z" strokeLinecap="round"/>
+                      <path d="M10.5 6.5v4l2.5 2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-text">I&apos;m a Maintainer</div>
+                    <div className="text-xs text-muted">I want to fund an issue</div>
+                  </div>
+                </div>
+                <p className="text-xs leading-5 text-muted">
+                  Pick an open GitHub issue, lock USDC as a reward, and PullPay will
+                  pay the contributor automatically when their PR is merged.
+                </p>
+                <Link
+                  href="/create"
+                  className="mt-auto inline-flex items-center justify-center gap-2 rounded-[6px] bg-accent px-4 py-2 text-sm font-medium text-[#0B0B0C] transition-all hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-[0_0_20px_rgba(66,133,244,0.3)]"
+                >
+                  Create a reward →
+                </Link>
+              </div>
+
+              {/* Contributor path */}
+              <div className="flex flex-col gap-3 rounded-[8px] border border-border bg-bg p-5">
+                <div className="flex items-center gap-2">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface text-muted">
+                    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth={1.75}>
+                      <path d="M7 8l-4 4 4 4M13 8l4 4-4 4M11 4l-2 12" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-text">I&apos;m a Contributor</div>
+                    <div className="text-xs text-muted">I want to earn USDC</div>
+                  </div>
+                </div>
+                <p className="text-xs leading-5 text-muted">
+                  Browse funded GitHub issues, open a PR, and receive USDC when it
+                  gets merged. You pay zero gas to receive the payout.
+                </p>
+                <Link
+                  href="/contributor"
+                  className="mt-auto inline-flex items-center justify-center gap-2 rounded-[6px] border border-border px-4 py-2 text-sm font-medium text-text transition-colors hover:bg-surface-2"
+                >
+                  Set up contributor profile →
+                </Link>
+              </div>
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-[10px] border border-dashed border-border p-12 text-center text-sm text-muted">
-            No bounties match these filters.
+            No rewards match these filters.
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {filtered.map((b) => (
-              <BountyCard key={b.id} bounty={b} />
+              <BountyCard
+                key={b.id}
+                repoName={b.repo}
+                issueTitle={b.issueTitle}
+                bountyAmount={b.amount}
+                walletAddress={b.contributor ?? b.maintainer}
+                issueNumber={b.issueNumber}
+                labels={[b.language, ...b.labels]}
+                mode={b.mode}
+                status={b.status}
+                href={`/reward/${b.id}`}
+              />
             ))}
           </div>
         )}

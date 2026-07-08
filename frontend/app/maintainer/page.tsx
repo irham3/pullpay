@@ -30,17 +30,17 @@ export default function MaintainerPage() {
     if (!address) return [];
     const seen = new Set<string>();
     return [...onchain, ...local].filter((b) => {
-      const k = b.id.toLowerCase();
-      if (seen.has(k)) return false;
-      seen.add(k);
+      const key = b.id.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
       return b.maintainer.toLowerCase() === address.toLowerCase();
     });
   }, [onchain, local, address]);
 
-  const totalFunded = mine.reduce((s, b) => s + b.amount, 0);
+  const totalFunded = mine.reduce((sum, b) => sum + b.amount, 0);
   const paidOut = mine
     .filter((b) => b.status === "Paid")
-    .reduce((s, b) => s + b.amount, 0);
+    .reduce((sum, b) => sum + b.amount, 0);
   const active = mine.filter((b) =>
     ["Open", "In Review", "Changes Requested", "Merged", "Verifying"].includes(
       b.status
@@ -54,7 +54,7 @@ export default function MaintainerPage() {
           Maintainer
         </h1>
         <p className="max-w-sm text-sm text-muted">
-          Connect your wallet to fund and manage rewards on your repositories.
+          Connect your wallet to create rewards and manage payouts.
         </p>
         <ConnectButton />
       </main>
@@ -68,11 +68,11 @@ export default function MaintainerPage() {
       <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-text">
-            Your rewards
+            Maintainer dashboard
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Bounties you funded. Merge a PR (via pullpay.yml) or release directly
-            to pay a contributor.
+            Rewards you funded. Connect the repo, merge a PR, then trigger the
+            payout.
           </p>
         </div>
         <Button asChild>
@@ -85,24 +85,24 @@ export default function MaintainerPage() {
           {balance !== undefined
             ? Number(formatUnits(balance, USDC_DECIMALS)).toLocaleString("en-US")
             : DEMO_MODE
-              ? "—"
+              ? "-"
               : "0"}
         </StatCard>
-        <StatCard label="You funded">${totalFunded.toLocaleString("en-US")}</StatCard>
-        <StatCard label="Paid out">${paidOut.toLocaleString("en-US")}</StatCard>
+        <StatCard label="Locked">${totalFunded.toLocaleString("en-US")}</StatCard>
+        <StatCard label="Paid">${paidOut.toLocaleString("en-US")}</StatCard>
         <StatCard label="Active">{active}</StatCard>
       </div>
 
       <div className="mt-8">
         {isLoading && mine.length === 0 ? (
           <div className="rounded-[10px] border border-dashed border-border p-12 text-center text-sm text-muted">
-            Reading your rewards from the chain…
+            Loading your rewards...
           </div>
         ) : mine.length === 0 ? (
           <div className="rounded-[10px] border border-dashed border-border p-12 text-center">
-            <p className="text-sm text-text">You haven’t funded any rewards yet.</p>
+            <p className="text-sm text-text">No rewards funded yet.</p>
             <p className="mt-1 text-sm text-muted">
-              Lock USDC against one of your open GitHub issues.
+              Create one reward for an open GitHub issue.
             </p>
             <Button asChild className="mt-4">
               <Link href="/create">Create your first reward</Link>
@@ -111,7 +111,18 @@ export default function MaintainerPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {mine.map((b) => (
-              <BountyCard key={b.id} bounty={b} />
+              <BountyCard
+                key={b.id}
+                repoName={b.repo}
+                issueTitle={b.issueTitle}
+                bountyAmount={b.amount}
+                walletAddress={b.contributor ?? b.maintainer}
+                issueNumber={b.issueNumber}
+                labels={[b.language, ...b.labels]}
+                mode={b.mode}
+                status={b.status}
+                href={`/reward/${b.id}`}
+              />
             ))}
           </div>
         )}

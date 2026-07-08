@@ -19,6 +19,7 @@ contracts/cache/
 
 # Misc
 keeper-state.json
-docs/
+/docs/
 .claude/
 *.tsbuildinfo
+frontend/next-dev-*.log

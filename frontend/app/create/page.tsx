@@ -334,7 +334,7 @@ function CreateRewardContent() {
               Reward funded
             </h2>
             <p className="mt-1 text-sm text-muted">
-              {amountNum} USDC is locked in escrow for {repo} #{issueNumber}.
+              {amountNum} USDC is now locked for {repo} #{issueNumber}.
             </p>
             <div className="mt-5 flex items-center justify-center gap-2 rounded-[8px] border border-border bg-bg px-3 py-2">
               <span className="text-xs text-muted">Reward ID</span>
@@ -351,7 +351,7 @@ function CreateRewardContent() {
             <p className="mt-6 text-left text-xs text-muted">
               Next: add a{" "}
               <span className="font-mono text-text">pullpay.yml</span> workflow
-              to {repo} so a merged PR triggers settlement automatically.
+              to {repo}. Then a merged PR can trigger payout.
             </p>
           </CardContent>
         </Card>
@@ -372,11 +372,10 @@ function CreateRewardContent() {
     <main className="mx-auto w-full max-w-lg flex-1 px-6 py-12">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-text">
-          Fund a reward
+          Create a reward
         </h1>
         <p className="mt-1 text-sm text-muted">
-          Lock USDC against a GitHub issue. Verified and paid out automatically
-          on merge.
+          Pick a GitHub issue, choose a USDC amount, and lock the funds.
         </p>
       </div>
 
@@ -384,7 +383,7 @@ function CreateRewardContent() {
         <CardHeader>
           <CardTitle>Select an issue</CardTitle>
           <CardDescription>
-            Connect your GitHub to pick from your repos, or paste a public issue URL.
+            Use your GitHub repos, or paste a public issue URL.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -409,7 +408,7 @@ function CreateRewardContent() {
                   <div className="flex flex-col items-center gap-3 rounded-[8px] border border-dashed border-border py-6">
                     <GithubIcon className="h-8 w-8 text-muted" />
                     <p className="text-sm text-muted">
-                      Connect GitHub to see your repos
+                      Connect GitHub to pick one of your repos.
                     </p>
                     <Button
                       type="button"
@@ -447,7 +446,7 @@ function CreateRewardContent() {
                     {/* Repo picker */}
                     <Field label="Repository" hint={
                       reposLoading
-                        ? "Loading repos…"
+                        ? "Loading repos..."
                         : repos.length === 0
                           ? ""
                           : `${repos.length} repo${repos.length > 1 ? "s" : ""} with PullPay installed`
@@ -459,7 +458,7 @@ function CreateRewardContent() {
                           disabled={reposLoading || repos.length === 0}
                           className="w-full appearance-none rounded-[6px] border border-border bg-bg px-3 py-2 pr-8 text-sm text-text font-mono transition-colors focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <option value="">Select a repository…</option>
+                          <option value="">Select a repository...</option>
                           {repos.map((r) => (
                             <option key={r.full_name} value={r.full_name}>
                               {r.full_name}{r.language ? ` · ${r.language}` : ""}
@@ -472,7 +471,7 @@ function CreateRewardContent() {
                       {!reposLoading && repos.length === 0 && (
                         <div className="mt-3 flex flex-col items-center justify-center gap-2 rounded-[8px] border border-dashed border-border bg-muted/5 py-4">
                           <p className="text-sm text-muted">
-                            PullPay App is not installed on your repos.
+                            No connected repos yet.
                           </p>
                           <Button
                             type="button"
@@ -491,7 +490,7 @@ function CreateRewardContent() {
                     {selectedRepo && (
                       <Field label="Issue" hint={
                         issuesLoading
-                          ? "Loading issues…"
+                          ? "Loading issues..."
                           : issues.length === 0
                             ? "No open issues found"
                             : `${issues.length} open issue${issues.length > 1 ? "s" : ""}`
@@ -504,7 +503,7 @@ function CreateRewardContent() {
                               type="text"
                               value={issueSearch}
                               onChange={(e) => setIssueSearch(e.target.value)}
-                              placeholder="Search issues…"
+                              placeholder="Search issues..."
                               className="w-full rounded-[6px] border border-border bg-bg pl-8 pr-3 py-1.5 text-xs text-text placeholder:text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                             />
                           </div>
@@ -579,7 +578,7 @@ function CreateRewardContent() {
                               PullPay GitHub App
                               <ExternalLink className="h-3 w-3" />
                             </a>{" "}
-                            on your repo to enable this flow, or switch to{" "}
+                            on your repo, or switch to{" "}
                             <button
                               type="button"
                               onClick={() => setSourceMode("manual")}
@@ -602,7 +601,7 @@ function CreateRewardContent() {
               <>
                 <Field
                   label="GitHub issue URL"
-                  hint="Paste the full URL to a public GitHub issue"
+                  hint="Use an open public issue"
                 >
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -679,7 +678,7 @@ function CreateRewardContent() {
               <>
                 <hr className="border-border" />
 
-                <Field label="Issue title" hint="Shown on the bounty board (editable)">
+                <Field label="Issue title" hint="Shown on the rewards board (editable)">
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -709,13 +708,13 @@ function CreateRewardContent() {
 
                 <Field
                   label="Acceptance criteria"
-                  hint="Hashed into the reward and used to judge disputes (optional)"
+                  hint="Optional. Add the exact work expected."
                 >
                   <textarea
                     value={criteria}
                     onChange={(e) => setCriteria(e.target.value)}
                     rows={3}
-                    placeholder="Link to the issue spec or paste the acceptance criteria…"
+                    placeholder="Example: fix the bug, add tests, and link the PR to this issue..."
                     className="w-full resize-none rounded-[6px] border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                   />
                 </Field>
@@ -766,8 +765,7 @@ function CreateRewardContent() {
                 {mode === MODE.Safeguarded && (
                   <p className="flex gap-2 text-xs text-muted">
                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
-                    The bond is returned on an honest settle. On a proven-false
-                    dispute, reward + bond return to you.
+                    Safeguarded mode locks a bond. Honest payout returns the bond.
                   </p>
                 )}
 
@@ -780,8 +778,7 @@ function CreateRewardContent() {
                 {DEMO_MODE && (
                   <p className="flex gap-2 rounded-[6px] border border-border bg-surface-2 px-3 py-2 text-xs text-muted">
                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
-                    Demo mode — no escrow is deployed, so this simulates the approve →
-                    createReward flow without a real transaction.
+                    Demo mode: no real escrow transaction will be sent.
                   </p>
                 )}
 
@@ -804,9 +801,9 @@ function CreateRewardContent() {
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" strokeWidth={1.75} />
                     )}
                     {step === "approving"
-                      ? "Approving USDC…"
+                      ? "Approving USDC..."
                       : step === "creating"
-                        ? "Locking in escrow…"
+                        ? "Locking USDC..."
                         : `Approve & lock ${total.toLocaleString("en-US")} USDC`}
                   </Button>
                 )}

@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/Button";
 import { BountyBoard } from "@/components/bounty/BountyBoard";
 
 export const metadata: Metadata = {
-  title: "Bounty board",
-  description:
-    "Browse on-chain-funded open source bounties. Every listing is a real, verifiable escrow on Optimism.",
+  title: "Rewards",
+  description: "Browse funded GitHub issues and pick work to contribute to.",
 };
 
-// ISR: the board is a discovery surface (PRD §27) — SSR/ISR for indexability.
 export const revalidate = 60;
 
 export default function BountiesPage() {
@@ -18,11 +16,11 @@ export default function BountiesPage() {
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-text">
-            Bounty board
+            Funded rewards
           </h1>
           <p className="mt-1 max-w-lg text-sm text-muted">
-            On-chain-funded open source work. Every bounty here is provably
-            backed — verify the escrow before you start.
+            Find funded GitHub issues. Open a PR, get it merged, and receive
+            USDC when the payout completes.
           </p>
         </div>
         <Button asChild>

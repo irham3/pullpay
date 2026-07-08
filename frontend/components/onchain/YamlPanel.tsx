@@ -5,9 +5,7 @@ import type { Bounty } from "@/lib/types";
 import { Check, Copy, FileCode2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Generates the per-reward `pullpay.yml` a maintainer drops into their repo
-// (PRD §11 example / §26). Bound to this reward's id, so a merged PR triggers
-// the relayer to settle exactly this bounty.
+// Generates the per-reward workflow a maintainer drops into their repo.
 export function YamlPanel({ bounty }: { bounty: Bounty }) {
   const [copied, setCopied] = React.useState(false);
   const [origin, setOrigin] = React.useState("https://your-pullpay.app");
@@ -49,7 +47,7 @@ jobs:
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-medium text-text">
           <FileCode2 className="h-4 w-4 text-accent" strokeWidth={1.5} />
-          Wire the repo — <span className="font-mono">.github/workflows/pullpay.yml</span>
+          Add this workflow to the repo
         </div>
         <button
           type="button"
@@ -74,9 +72,9 @@ jobs:
         <code>{yaml}</code>
       </pre>
       <p className="border-t border-border px-4 py-2.5 text-xs text-muted">
-        Commit this file to <span className="font-mono text-text">{bounty.repo}</span>.
-        On merge it pings the relayer, which re-verifies via the GitHub API before
-        settling.
+        Commit it as{" "}
+        <span className="font-mono text-text">.github/workflows/pullpay.yml</span>
+        . When a PR is merged, it asks PullPay to verify the merge and pay.
       </p>
     </div>
   );

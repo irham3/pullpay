@@ -35,9 +35,8 @@ export function RewardActions({
   const [pr, setPr] = React.useState("");
   const [note, setNote] = React.useState<string | null>(null);
   const [settling, setSettling] = React.useState(false);
-
-  // Read the clock after mount only (keeps render pure / SSR-safe).
   const [nowSec, setNowSec] = React.useState<number | null>(null);
+
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time clock read on mount
     setNowSec(Math.floor(Date.now() / 1000));
@@ -54,7 +53,7 @@ export function RewardActions({
     return (
       <div className="flex flex-col items-center gap-2 rounded-[10px] border border-dashed border-border p-6">
         <span className="text-sm text-muted">
-          Connect a wallet to interact with this reward
+          Connect a wallet to take actions on this reward.
         </span>
         <ConnectButton />
       </div>
@@ -64,7 +63,7 @@ export function RewardActions({
   async function guarded(fn: () => Promise<unknown>, ok: string) {
     setNote(null);
     if (DEMO_MODE) {
-      setNote("Demo mode — deploy an escrow to run this on-chain.");
+      setNote("Demo mode: deploy an escrow to run this on-chain.");
       return;
     }
     try {
@@ -96,11 +95,11 @@ export function RewardActions({
       const data = await res.json();
       setNote(
         res.ok
-          ? `Relayer ${data.action} — tx ${String(data.txHash).slice(0, 10)}…`
-          : `Relayer: ${data.error}${data.hint ? ` (${data.hint})` : ""}`
+          ? `Payout request sent: ${data.action}, tx ${String(data.txHash).slice(0, 10)}...`
+          : `Could not settle: ${data.error}${data.hint ? ` (${data.hint})` : ""}`
       );
     } catch (e) {
-      setNote(e instanceof Error ? e.message : "relayer call failed");
+      setNote(e instanceof Error ? e.message : "settle call failed");
     } finally {
       setSettling(false);
     }
@@ -108,18 +107,17 @@ export function RewardActions({
 
   const sections: React.ReactNode[] = [];
 
-  // --- Maintainer, Instant, still open: approve + release directly ---
   if (isMaintainer && isOpen && bounty.mode === "Instant") {
     sections.push(
       <div key="release" className="space-y-2">
         <div className="text-xs text-muted">
-          Pay a contributor directly (Instant — no oracle)
+          Pay a contributor address now. Use this for Instant rewards.
         </div>
         <Input
           mono
           value={contributor}
           onChange={(e) => setContributor(e.target.value)}
-          placeholder="0x… contributor address"
+          placeholder="0x... contributor address"
         />
         <Button
           className="w-full"
@@ -127,23 +125,22 @@ export function RewardActions({
           onClick={() =>
             guarded(
               () => approveAndRelease(bounty.id, contributor as Address),
-              "Released — contributor paid + attestation minted."
+              "Contributor paid. Reputation can be recorded."
             )
           }
         >
           {isReleasing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Approve &amp; release {bounty.amount} {bounty.token}
+          Pay contributor {bounty.amount} {bounty.token}
         </Button>
       </div>
     );
   }
 
-  // --- Maintainer or relayer: settle via a verified merge (GitHub → relayer) ---
   if (isMaintainer && isOpen && !DEMO_MODE) {
     sections.push(
       <div key="relayer" className="space-y-2">
         <div className="text-xs text-muted">
-          Or settle from a merged PR (relayer re-verifies via GitHub)
+          Enter the merged PR number. PullPay checks GitHub before payout.
         </div>
         <div className="flex gap-2">
           <Input
@@ -160,14 +157,13 @@ export function RewardActions({
             onClick={triggerRelayer}
           >
             {settling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Trigger relayer settle
+            Settle from PR
           </Button>
         </div>
       </div>
     );
   }
 
-  // --- Demo: resolve a pending assertion via the mock oracle ---
   if (
     MOCK_ORACLE &&
     bounty.status === "Verifying" &&
@@ -177,7 +173,7 @@ export function RewardActions({
     sections.push(
       <div key="resolve" className="space-y-2">
         <div className="text-xs text-muted">
-          Demo oracle — resolve the assertion
+          Demo oracle: choose the result for this pending check.
         </div>
         <div className="flex gap-2">
           <Button
@@ -186,12 +182,12 @@ export function RewardActions({
             onClick={() =>
               guarded(
                 () => resolve(assertionId, true),
-                "Resolved TRUE — contributor paid, bond returned."
+                "Marked true. Contributor paid and bond returned."
               )
             }
           >
             {isResolving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Settle (pay)
+            Mark true
           </Button>
           <Button
             variant="danger"
@@ -200,19 +196,18 @@ export function RewardActions({
             onClick={() =>
               guarded(
                 () => resolve(assertionId, false),
-                "Resolved FALSE — funds returned to maintainer."
+                "Marked false. Funds returned to maintainer."
               )
             }
           >
             <Gavel className="mr-1.5 h-3.5 w-3.5" strokeWidth={1.75} />
-            Dispute
+            Mark false
           </Button>
         </div>
       </div>
     );
   }
 
-  // --- Contributor: escalate a stalled Instant reward past the deadline ---
   if (
     !isMaintainer &&
     isOpen &&
@@ -240,17 +235,16 @@ export function RewardActions({
                   })
                 )
               ),
-            "Escalated to UMA — awaiting the liveness window."
+            "Escalated to UMA. Wait for the challenge window."
           )
         }
       >
         {isEscalating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Claim via UMA (escalate)
+        Escalate to UMA
       </Button>
     );
   }
 
-  // --- Maintainer: refund after the deadline ---
   if (isMaintainer && isOpen && deadlinePassed) {
     sections.push(
       <Button
@@ -258,9 +252,7 @@ export function RewardActions({
         variant="danger"
         className="w-full"
         disabled={isRefunding}
-        onClick={() =>
-          guarded(() => refund(bounty.id), "Refund submitted.")
-        }
+        onClick={() => guarded(() => refund(bounty.id), "Refund submitted.")}
       >
         {isRefunding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Refund reward
@@ -268,7 +260,6 @@ export function RewardActions({
     );
   }
 
-  // --- Contributor discovery / paid states ---
   if (!isMaintainer && bounty.status === "Open") {
     sections.push(
       <div key="work" className="space-y-2">
@@ -278,7 +269,7 @@ export function RewardActions({
             target="_blank"
             rel="noreferrer"
           >
-            Open the issue on GitHub ↗
+            Open issue on GitHub
           </a>
         </Button>
         <WorkingOnButton id={bounty.id} />
@@ -300,7 +291,7 @@ export function RewardActions({
         sections
       ) : (
         <span className="text-sm text-muted">
-          No actions available at this status for your address.
+          No action available for your wallet right now.
         </span>
       )}
       {note && (

@@ -2,7 +2,6 @@ import { Zap, ShieldCheck } from "lucide-react";
 import type { Mode } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-// Instant = trust the merge (no oracle). Safeguarded = UMA-backed (PRD §24).
 export function ModeBadge({
   mode,
   className,
@@ -15,8 +14,8 @@ export function ModeBadge({
     <span
       title={
         instant
-          ? "Instant — maintainer trusts the merge; direct release, no oracle."
-          : "Safeguarded — verified through UMA with a dispute window."
+          ? "Instant: merged PR can be paid directly."
+          : "Safeguarded: UMA adds a challenge window before payout."
       }
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted",

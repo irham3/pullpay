@@ -1,6 +1,3 @@
-// Unified reward/PR status model (PRD §25). One UI status composed from the
-// off-chain PR signal and the on-chain contract Status enum.
-
 export type UiStatus =
   | "Open"
   | "In Review"
@@ -15,45 +12,43 @@ export type UiStatus =
 export type Signal = "muted" | "ok" | "warn" | "bad" | "accent";
 
 export interface StatusMeta {
-  /** CSS var backing the status dot / accent. */
   dot: Signal;
-  /** One-line human meaning shown in tooltips and detail headers. */
   description: string;
 }
 
 export const STATUS_META: Record<UiStatus, StatusMeta> = {
-  Open: { dot: "ok", description: "Bounty funded and awaiting work." },
+  Open: { dot: "ok", description: "Reward is funded. Work can start." },
   "In Review": {
     dot: "accent",
-    description: "A linked PR is open and under maintainer review.",
+    description: "A pull request is open and being reviewed.",
   },
   "Changes Requested": {
     dot: "warn",
-    description: "The maintainer requested changes on the PR.",
+    description: "The PR needs changes before merge.",
   },
   Merged: {
     dot: "accent",
-    description: "PR merged — settlement is starting.",
+    description: "The PR was merged. Payout is starting.",
   },
   Verifying: {
     dot: "warn",
-    description: "UMA liveness window is running before payout.",
+    description: "PullPay is waiting for the UMA check to finish.",
   },
   Disputed: {
     dot: "bad",
-    description: "Challenged — resolving via UMA commit–reveal voting.",
+    description: "The payout was challenged and is being resolved by UMA.",
   },
   Paid: {
     dot: "ok",
-    description: "Contributor paid and reputation attestation minted.",
+    description: "Contributor was paid. Reputation was recorded.",
   },
   Rejected: {
     dot: "bad",
-    description: "A dispute proved the claim false; funds returned.",
+    description: "The payout request failed. Funds returned to the funder.",
   },
   Refunded: {
     dot: "muted",
-    description: "Deadline passed with no eligible work; funds returned.",
+    description: "Deadline passed. Funds returned to the maintainer.",
   },
 };
 
@@ -65,7 +60,6 @@ export const signalVar: Record<Signal, string> = {
   accent: "var(--accent)",
 };
 
-// On-chain contract Status enum → default UI status (before PR enrichment).
 export const CONTRACT_STATUS = [
   "None",
   "Funded",
@@ -94,7 +88,6 @@ export function contractStatusToUi(s: ContractStatus): UiStatus {
   }
 }
 
-// Ordered lifecycle phases for the reward-detail stepper.
 export const LIFECYCLE: UiStatus[] = [
   "Open",
   "In Review",

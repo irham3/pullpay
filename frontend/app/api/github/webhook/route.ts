@@ -11,7 +11,6 @@ import {
 import { readReward, findRewardIdForIssue } from "@/lib/server/relayer";
 import { USDC_DECIMALS } from "@/lib/contracts/addresses";
 
-// Resolve the rewardId for a repo+issue: cache first, else scan on-chain + cache.
 async function resolveRewardId(
   repo: string,
   issue: number
@@ -25,7 +24,6 @@ async function resolveRewardId(
 
 export const runtime = "nodejs";
 
-// Verify the HMAC-SHA256 signature GitHub sends (x-hub-signature-256).
 function verifySignature(raw: string, sig: string | null, secret: string): boolean {
   if (!sig) return false;
   const expected =
@@ -35,7 +33,6 @@ function verifySignature(raw: string, sig: string | null, secret: string): boole
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-// Pull the closed issue number from a PR body/title ("closes #123").
 function closingIssue(text: string): number | null {
   const m = /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/i.exec(text || "");
   return m ? Number(m[1]) : null;
@@ -56,7 +53,6 @@ export async function POST(req: Request) {
   const payload = JSON.parse(raw);
 
   try {
-    // --- Installation lifecycle: remember installation id per account owner ---
     if (event === "installation" || event === "installation_repositories") {
       const owner = payload.installation?.account?.login;
       const id = payload.installation?.id;
@@ -64,7 +60,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, handled: "installation" });
     }
 
-    // --- Pull request events ---
     if (event === "pull_request") {
       const pr = payload.pull_request;
       const repo = payload.repository?.full_name as string;
@@ -79,20 +74,18 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, note: "no reward for issue" });
       }
 
-      // PR opened → announce the bounty + pending check.
       if (action === "opened" || action === "reopened") {
         const reward = await readReward(rewardId);
         const amt = Number(formatUnits(reward.amount, USDC_DECIMALS));
         await comment(
           repo,
           pr.number,
-          `💰 This PR is linked to a **${amt} USDC** PullPay bounty on issue #${issue}. On merge, the reward settles automatically.`
+          `This PR is linked to a ${amt} USDC PullPay reward on issue #${issue}. If it is merged, PullPay can verify the merge and start payout.`
         );
-        await setPrStatus(repo, pr.head.sha, "pending", `Bounty: ${amt} USDC — pays on merge`);
+        await setPrStatus(repo, pr.head.sha, "pending", `Reward: ${amt} USDC - pays on merge`);
         return NextResponse.json({ ok: true, handled: "pr.opened" });
       }
 
-      // PR merged → settle + report.
       if (action === "closed" && pr.merged) {
         const result = await settleReward({
           rewardId,
@@ -105,20 +98,20 @@ export async function POST(req: Request) {
           const action2 = result.body.action;
           const msg =
             action2 === "settleInstant"
-              ? `✅ Paid! USDC released to the contributor. tx: \`${result.body.txHash}\``
-              : `🟣 Verifying via UMA — payout after the challenge window. tx: \`${result.body.txHash}\``;
+              ? `Paid. USDC released to the contributor. tx: \`${result.body.txHash}\``
+              : `Verifying with UMA. Payout can finish after the challenge window. tx: \`${result.body.txHash}\``;
           await comment(repo, pr.number, msg);
           await setPrStatus(
             repo,
             pr.head.sha,
             action2 === "settleInstant" ? "success" : "pending",
-            action2 === "settleInstant" ? "Bounty paid" : "Bounty verifying"
+            action2 === "settleInstant" ? "Reward paid" : "Reward verifying"
           );
         } else {
           await comment(
             repo,
             pr.number,
-            `⚠️ PullPay could not settle automatically: ${result.body.error}${
+            `PullPay could not start payout: ${result.body.error}${
               result.body.hint ? ` (${result.body.hint})` : ""
             }`
           );

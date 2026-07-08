@@ -14,7 +14,7 @@ export default function NotFound() {
       </p>
       <div className="mt-2 flex gap-3">
         <Button asChild>
-          <Link href="/bounties">Browse bounties</Link>
+          <Link href="/bounties">Browse rewards</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/">Home</Link>

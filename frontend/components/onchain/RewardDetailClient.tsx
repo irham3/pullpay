@@ -35,7 +35,7 @@ export function RewardDetailClient({ id }: { id: `0x${string}` }) {
           No reward with this id exists on-chain or in this browser.
         </p>
         <Button asChild>
-          <Link href="/bounties">Browse bounties</Link>
+          <Link href="/bounties">Browse rewards</Link>
         </Button>
       </main>
     );
