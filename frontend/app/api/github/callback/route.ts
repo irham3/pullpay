@@ -5,19 +5,23 @@ export const runtime = "nodejs";
 // GitHub App user-authorization callback (PRD §30.5). Exchanges the code for the
 // user's GitHub login and drops it in a cookie so the contributor's wallet link
 // is bound to a *verified* GitHub identity (not just a typed username).
+// Also supports the maintainer /create flow — `state` carries the return path.
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const origin = url.origin;
+  // Where to return after auth (carried via `state`); default the contributor view.
+  const rawNext = url.searchParams.get("state") || "/contributor";
+  const next = rawNext.startsWith("/") ? rawNext : "/contributor";
 
   if (!code) {
-    return NextResponse.redirect(new URL("/contributor", origin));
+    return NextResponse.redirect(new URL(next, origin));
   }
 
   const clientId = process.env.GITHUB_APP_CLIENT_ID;
   const clientSecret = process.env.GITHUB_APP_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    return NextResponse.redirect(new URL("/contributor?gh=unconfigured", origin));
+    return NextResponse.redirect(new URL(`${next}${next.includes("?") ? "&" : "?"}gh=unconfigured`, origin));
   }
 
   try {
@@ -28,7 +32,7 @@ export async function GET(req: Request) {
     });
     const token = (await tokenRes.json()) as { access_token?: string };
     if (!token.access_token) {
-      return NextResponse.redirect(new URL("/contributor?gh=error", origin));
+      return NextResponse.redirect(new URL(`${next}${next.includes("?") ? "&" : "?"}gh=error`, origin));
     }
 
     const userRes = await fetch("https://api.github.com/user", {
@@ -40,13 +44,13 @@ export async function GET(req: Request) {
     });
     const user = (await userRes.json()) as { login?: string };
     if (!user.login) {
-      return NextResponse.redirect(new URL("/contributor?gh=error", origin));
+      return NextResponse.redirect(new URL(`${next}${next.includes("?") ? "&" : "?"}gh=error`, origin));
     }
 
-    const res = NextResponse.redirect(
-      new URL(`/contributor?gh=${encodeURIComponent(user.login)}`, origin)
-    );
-    // Non-httpOnly so the client can prefill the link form; short-lived.
+    // Append gh=<login> to the return URL so the page knows who connected.
+    const returnUrl = `${next}${next.includes("?") ? "&" : "?"}gh=${encodeURIComponent(user.login)}`;
+    const res = NextResponse.redirect(new URL(returnUrl, origin));
+    // Non-httpOnly so the client can read the GitHub handle; short-lived.
     res.cookies.set("pullpay_gh", user.login, {
       path: "/",
       maxAge: 3600,
@@ -54,6 +58,6 @@ export async function GET(req: Request) {
     });
     return res;
   } catch {
-    return NextResponse.redirect(new URL("/contributor?gh=error", origin));
+    return NextResponse.redirect(new URL(`${next}${next.includes("?") ? "&" : "?"}gh=error`, origin));
   }
 }
