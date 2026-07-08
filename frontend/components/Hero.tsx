@@ -83,22 +83,22 @@ export function Hero({
   return (
     <section
       className={cn(
-        "relative isolate overflow-hidden border-b border-[#4285F4]/20 bg-[#0B0F14]",
+        "relative isolate overflow-hidden border-b border-[#8B5CF6]/20 bg-[#0B0F14]",
         className
       )}
     >
       <div className="hero-grid absolute inset-0 opacity-55" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#4285F4]/70 to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#8B5CF6]/70 to-transparent" />
 
       <div className="relative mx-auto flex max-w-6xl flex-col items-center px-6 py-16 text-center sm:py-24">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#4285F4]/30 bg-[#1E2329]/70 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-[#AAB4C0] shadow-[0_0_24px_rgba(66,133,244,0.12)] backdrop-blur-md">
-          <span className="live-dot h-1.5 w-1.5 rounded-full bg-[#4285F4] shadow-[0_0_14px_rgba(66,133,244,0.85)]" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#8B5CF6]/30 bg-[#1E2329]/70 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-[#AAB4C0] shadow-[0_0_24px_rgba(139,92,246,0.12)] backdrop-blur-md">
+          <span className="live-dot h-1.5 w-1.5 rounded-full bg-[#8B5CF6] shadow-[0_0_14px_rgba(139,92,246,0.85)]" />
           GitHub issue to merged PR to USDC payout
         </div>
 
         <h1 className="mt-7 max-w-4xl text-4xl font-semibold leading-[1.04] tracking-tight text-[#F4F7FB] sm:text-6xl">
           Pay open source contributors when their PR is merged on{" "}
-          <span className="text-[#4285F4] drop-shadow-[0_0_22px_rgba(66,133,244,0.38)]">
+          <span className="text-[#8B5CF6] drop-shadow-[0_0_22px_rgba(139,92,246,0.38)]">
             Optimism.
           </span>
         </h1>
@@ -112,7 +112,7 @@ export function Hero({
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
             href={launchHref}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#4285F4] px-6 text-sm font-semibold text-white shadow-[0_0_26px_rgba(66,133,244,0.32)] transition-all hover:-translate-y-0.5 hover:bg-[#6EA8FF] hover:shadow-[0_0_40px_rgba(66,133,244,0.52)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4285F4] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F14]"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#8B5CF6] px-6 text-sm font-semibold text-white shadow-[0_0_26px_rgba(139,92,246,0.32)] transition-all hover:-translate-y-0.5 hover:bg-[#A78BFA] hover:shadow-[0_0_40px_rgba(139,92,246,0.52)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F14]"
           >
             <Rocket className="h-4 w-4" strokeWidth={1.75} />
             Launch App
@@ -132,7 +132,7 @@ export function Hero({
 
 function DocsLink({ href }: { href: string }) {
   const className =
-    "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#4285F4]/25 bg-[#1E2329]/30 px-6 font-mono text-sm text-[#F4F7FB] transition-all hover:border-[#4285F4]/55 hover:bg-[#1E2329]/75 hover:shadow-[0_0_24px_rgba(66,133,244,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4285F4] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F14]";
+    "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#8B5CF6]/25 bg-[#1E2329]/30 px-6 font-mono text-sm text-[#F4F7FB] transition-all hover:border-[#8B5CF6]/55 hover:bg-[#1E2329]/75 hover:shadow-[0_0_24px_rgba(139,92,246,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F14]";
 
   const content = (
     <>
@@ -165,10 +165,10 @@ function QuickSteps() {
         return (
           <div
             key={step.title}
-            className="rounded-lg border border-[#4285F4]/16 bg-[#1E2329]/68 p-4 text-left backdrop-blur-md"
+            className="rounded-lg border border-[#8B5CF6]/16 bg-[#1E2329]/68 p-4 text-left backdrop-blur-md"
           >
             <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#4285F4]/25 bg-[#0B0F14] text-[#4285F4] shadow-[0_0_18px_rgba(66,133,244,0.14)]">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#8B5CF6]/25 bg-[#0B0F14] text-[#8B5CF6] shadow-[0_0_18px_rgba(139,92,246,0.14)]">
                 <Icon className="h-4 w-4" strokeWidth={1.75} />
               </span>
               <h2 className="text-sm font-semibold text-[#F4F7FB]">
@@ -250,15 +250,15 @@ function LiveTerminal() {
       ].filter(Boolean);
 
   return (
-    <div className="terminal-scanline min-h-[390px] overflow-hidden rounded-lg border border-[#4285F4]/28 bg-[#1E2329]/78 shadow-[0_0_44px_rgba(66,133,244,0.12)] backdrop-blur-md">
+    <div className="terminal-scanline min-h-[390px] overflow-hidden rounded-lg border border-[#8B5CF6]/28 bg-[#1E2329]/78 shadow-[0_0_44px_rgba(139,92,246,0.12)] backdrop-blur-md">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 font-mono text-xs text-[#AAB4C0]">
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#4285F4]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#8B5CF6]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#E0B341]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#4285F4]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#8B5CF6]" />
         </div>
         <div className="flex items-center gap-2">
-          <Terminal className="h-3.5 w-3.5 text-[#4285F4]" strokeWidth={1.75} />
+          <Terminal className="h-3.5 w-3.5 text-[#8B5CF6]" strokeWidth={1.75} />
           Live Terminal
         </div>
       </div>
@@ -277,7 +277,7 @@ function LiveTerminal() {
           <div key={`${line}-${index}`} className="break-words">
             <TerminalLine line={line} />
             {!reducedMotion && index === renderedLines.length - 1 && (
-              <span className="ml-1 inline-block h-4 w-2 translate-y-0.5 animate-pulse bg-[#4285F4]" />
+              <span className="ml-1 inline-block h-4 w-2 translate-y-0.5 animate-pulse bg-[#8B5CF6]" />
             )}
           </div>
         ))}
@@ -303,7 +303,7 @@ function TerminalMetric({
       <div
         className={cn(
           "mt-1 font-mono text-sm",
-          accent === "blue" ? "text-[#4285F4]" : "text-[#F4F7FB]"
+          accent === "blue" ? "text-[#8B5CF6]" : "text-[#F4F7FB]"
         )}
       >
         {value}
@@ -314,10 +314,10 @@ function TerminalMetric({
 
 function VerificationPipeline() {
   return (
-    <div className="rounded-lg border border-white/10 bg-[#1E2329]/72 p-4 shadow-[0_0_28px_rgba(66,133,244,0.08)] backdrop-blur-md">
+    <div className="rounded-lg border border-white/10 bg-[#1E2329]/72 p-4 shadow-[0_0_28px_rgba(139,92,246,0.08)] backdrop-blur-md">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium text-[#F4F7FB]">
-          <Activity className="h-4 w-4 text-[#4285F4]" strokeWidth={1.75} />
+          <Activity className="h-4 w-4 text-[#8B5CF6]" strokeWidth={1.75} />
           Payout path
         </div>
         <span className="font-mono text-[11px] text-[#AAB4C0]">live</span>
@@ -330,10 +330,10 @@ function VerificationPipeline() {
           return (
             <div key={step.label} className="relative flex items-center gap-3">
               {index < PIPELINE.length - 1 && (
-                <span className="absolute left-[15px] top-8 h-7 w-px bg-gradient-to-b from-[#4285F4]/70 to-[#4285F4]/20" />
+                <span className="absolute left-[15px] top-8 h-7 w-px bg-gradient-to-b from-[#8B5CF6]/70 to-[#8B5CF6]/20" />
               )}
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#4285F4]/25 bg-[#0B0F14] shadow-[0_0_18px_rgba(66,133,244,0.12)]">
-                <Icon className="h-4 w-4 text-[#4285F4]" strokeWidth={1.75} />
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#8B5CF6]/25 bg-[#0B0F14] shadow-[0_0_18px_rgba(139,92,246,0.12)]">
+                <Icon className="h-4 w-4 text-[#8B5CF6]" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
                 <div className="text-sm font-medium text-[#F4F7FB]">
@@ -344,7 +344,7 @@ function VerificationPipeline() {
                 </div>
               </div>
               <CheckCircle2
-                className="ml-auto h-4 w-4 text-[#4285F4]"
+                className="ml-auto h-4 w-4 text-[#8B5CF6]"
                 strokeWidth={1.75}
               />
             </div>
@@ -370,7 +370,7 @@ function SettlementFeed() {
     <div className="rounded-lg border border-white/10 bg-[#1E2329]/72 p-4 backdrop-blur-md">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium text-[#F4F7FB]">
-          <Zap className="h-4 w-4 text-[#4285F4]" strokeWidth={1.75} />
+          <Zap className="h-4 w-4 text-[#8B5CF6]" strokeWidth={1.75} />
           Recent events
         </div>
         <span className="font-mono text-[11px] text-[#AAB4C0]">
@@ -388,7 +388,7 @@ function SettlementFeed() {
               className={cn(
                 "rounded-md border px-3 py-3 transition-all",
                 active
-                  ? "border-[#4285F4]/45 bg-[#4285F4]/10 shadow-[0_0_24px_rgba(66,133,244,0.16)]"
+                  ? "border-[#8B5CF6]/45 bg-[#8B5CF6]/10 shadow-[0_0_24px_rgba(139,92,246,0.16)]"
                   : "border-white/10 bg-[#0B0F14]/45"
               )}
             >
@@ -396,7 +396,7 @@ function SettlementFeed() {
                 <span
                   className={cn(
                     "h-1.5 w-1.5 rounded-full",
-                    active ? "bg-[#4285F4]" : "bg-[#6EA8FF]/60"
+                    active ? "bg-[#8B5CF6]" : "bg-[#A78BFA]/60"
                   )}
                 />
                 <span className="text-sm font-medium text-[#F4F7FB]">
@@ -426,7 +426,7 @@ function TerminalLine({ line }: { line: string }) {
   return (
     <>
       <span>{highlightLine(line.slice(0, okIndex))}</span>
-      <span className="text-[#4285F4] drop-shadow-[0_0_10px_rgba(66,133,244,0.45)]">
+      <span className="text-[#8B5CF6] drop-shadow-[0_0_10px_rgba(139,92,246,0.45)]">
         {okToken}
       </span>
       <span>{highlightLine(line.slice(okIndex + okToken.length))}</span>
@@ -441,14 +441,14 @@ function highlightLine(line: string) {
     const key = `${piece}-${index}`;
     if (piece.startsWith("0x")) {
       return (
-        <span key={key} className="text-[#4285F4]">
+        <span key={key} className="text-[#8B5CF6]">
           {piece}
         </span>
       );
     }
     if (piece.startsWith("$") || piece.startsWith("@")) {
       return (
-        <span key={key} className="text-[#8CB8FF]">
+        <span key={key} className="text-[#C4B5FD]">
           {piece}
         </span>
       );

@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0E0F13;
-  --surface: #181A20;
-  --surface-2: #1F2229;
-  --border: rgba(255, 255, 255, 0.07);
-  --text: #E6E7EB;
-  --muted: #9498A3;
-  --accent: #5C6BE6;
-  --accent-hover: #7583ED;
+  --bg: #100A1A;
+  --surface: #171020;
+  --surface-2: #21152F;
+  --border: rgba(196, 181, 253, 0.16);
+  --text: #F5F3FF;
+  --muted: #A9A1B8;
+  --accent: #8B5CF6;
+  --accent-hover: #A78BFA;
   --ok: #4ADE80;
   --warn: #E0B341;
   --bad: #FF0420;
@@ -54,7 +54,7 @@ body {
 }
 
 .dot-grid {
-  background-image: radial-gradient(var(--dot-color, rgba(66, 133, 244, 0.14)) 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot-color, rgba(139, 92, 246, 0.16)) 1px, transparent 1px);
   background-size: 22px 22px;
 }
 
@@ -62,15 +62,15 @@ body {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    radial-gradient(rgba(66, 133, 244, 0.18) 1px, transparent 1px);
+    radial-gradient(rgba(139, 92, 246, 0.2) 1px, transparent 1px);
   background-size: 64px 64px, 64px 64px, 24px 24px;
   animation: grid-drift 28s linear infinite;
 }
 
 .section-grid {
   background-image:
-    linear-gradient(rgba(66, 133, 244, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(66, 133, 244, 0.045) 1px, transparent 1px);
+    linear-gradient(rgba(139, 92, 246, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.06) 1px, transparent 1px);
   background-size: 56px 56px;
   animation: section-grid-drift 36s linear infinite;
 }
@@ -87,7 +87,7 @@ body {
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(66, 133, 244, 0.12) 50%,
+    rgba(139, 92, 246, 0.16) 50%,
     transparent 100%
   );
   height: 120px;
@@ -182,6 +182,36 @@ body {
   animation: pulse-dot 1.6s ease-in-out infinite;
 }
 
+.animate-star-movement-bottom {
+  animation: star-movement-bottom linear infinite alternate;
+}
+
+.animate-star-movement-top {
+  animation: star-movement-top linear infinite alternate;
+}
+
+@keyframes star-movement-bottom {
+  0% {
+    transform: translate(0%, 0%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-100%, 0%);
+    opacity: 0;
+  }
+}
+
+@keyframes star-movement-top {
+  0% {
+    transform: translate(0%, 0%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(100%, 0%);
+    opacity: 0;
+  }
+}
+
 /* Respect the user's motion preference (DESIGN.md §6.1 / §9). */
 @media (prefers-reduced-motion: reduce) {
   .reveal,
@@ -190,6 +220,10 @@ body {
   .hero-grid,
   .section-grid,
   .terminal-scanline::after {
+    animation: none;
+  }
+  .animate-star-movement-bottom,
+  .animate-star-movement-top {
     animation: none;
   }
   .reveal {

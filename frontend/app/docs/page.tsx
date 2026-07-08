@@ -116,7 +116,7 @@ export default function DocsPage() {
       <section className="border-b border-border bg-[#0B0F14]">
         <div className="mx-auto max-w-6xl px-6 py-14 sm:py-18">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#4285F4]/25 bg-[#1E2329]/70 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted backdrop-blur-md">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#8B5CF6]/25 bg-[#1E2329]/70 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted backdrop-blur-md">
               <Terminal className="h-3.5 w-3.5 text-accent" strokeWidth={1.75} />
               Technical guide
             </div>
@@ -411,7 +411,7 @@ function RunbookRow({
     <div className="rounded-lg border border-border bg-surface p-4 backdrop-blur-md">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-base font-medium text-text">{title}</h3>
-        <span className="rounded-full border border-[#4285F4]/25 bg-[#4285F4]/10 px-2 py-0.5 font-mono text-[11px] text-[#8CB8FF]">
+        <span className="rounded-full border border-[#8B5CF6]/25 bg-[#8B5CF6]/10 px-2 py-0.5 font-mono text-[11px] text-[#C4B5FD]">
           {actor}
         </span>
       </div>
@@ -422,7 +422,7 @@ function RunbookRow({
 
 function Callout({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <div className="mt-4 flex gap-3 rounded-lg border border-[#4285F4]/20 bg-[#4285F4]/10 p-4 text-sm leading-6 text-muted">
+    <div className="mt-4 flex gap-3 rounded-lg border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 p-4 text-sm leading-6 text-muted">
       <span className="mt-0.5 shrink-0 text-accent">{icon}</span>
       <p>{children}</p>
     </div>

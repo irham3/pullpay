@@ -23,10 +23,18 @@ export default function ContributorPage() {
 
   const [workingIds, setWorkingIds] = React.useState<string[]>([]);
   const [local, setLocal] = React.useState<Bounty[]>([]);
+  const [githubLinked, setGithubLinked] = React.useState(false);
+
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load local flags on mount
     setWorkingIds(loadWorkingOn());
     setLocal(loadLocalRewards());
+  }, []);
+
+  React.useEffect(() => {
+    const m = document.cookie.match(/(?:^|;\s*)pullpay_gh=([^;]+)/);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read cookie on mount
+    setGithubLinked(Boolean(m));
   }, []);
 
   const pool = React.useMemo(() => {
@@ -66,14 +74,6 @@ export default function ContributorPage() {
 
   // Cek apakah user masih baru (belum ada aktivitas apapun)
   const isNewUser = working.length === 0 && attestations.length === 0;
-
-  // Cek apakah GitHub sudah di-link (baca dari cookie)
-  const [githubLinked, setGithubLinked] = React.useState(false);
-  React.useEffect(() => {
-    const m = document.cookie.match(/(?:^|;\s*)pullpay_gh=([^;]+)/);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- read cookie on mount
-    setGithubLinked(Boolean(m));
-  }, []);
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">

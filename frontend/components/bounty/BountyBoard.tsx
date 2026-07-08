@@ -179,9 +179,9 @@ export function BountyBoard() {
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Maintainer path */}
-              <div className="flex flex-col gap-3 rounded-[8px] border border-[#4285F4]/20 bg-[color-mix(in_srgb,var(--accent)_5%,transparent)] p-5">
+              <div className="flex flex-col gap-3 rounded-[8px] border border-[#8B5CF6]/20 bg-[color-mix(in_srgb,var(--accent)_5%,transparent)] p-5">
                 <div className="flex items-center gap-2">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#4285F4]/25 bg-bg text-accent">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#8B5CF6]/25 bg-bg text-accent">
                     <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth={1.75}>
                       <path d="M10.5 2.5a8 8 0 1 1 0 16 8 8 0 0 1 0-16z" strokeLinecap="round"/>
                       <path d="M10.5 6.5v4l2.5 2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -198,7 +198,7 @@ export function BountyBoard() {
                 </p>
                 <Link
                   href="/create"
-                  className="mt-auto inline-flex items-center justify-center gap-2 rounded-[6px] bg-accent px-4 py-2 text-sm font-medium text-[#0B0B0C] transition-all hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-[0_0_20px_rgba(66,133,244,0.3)]"
+                  className="mt-auto inline-flex items-center justify-center gap-2 rounded-[6px] bg-accent px-4 py-2 text-sm font-medium text-[#0B0B0C] transition-all hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]"
                 >
                   Create a reward →
                 </Link>

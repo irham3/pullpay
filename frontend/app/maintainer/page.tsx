@@ -92,7 +92,6 @@ export default function MaintainerPage() {
             <StatCard label="Paid out">${paidOut.toLocaleString("en-US")}</StatCard>
             <StatCard label="Active">{active}</StatCard>
           </div>
-          </div>
 
           <div className="mt-8">
             {isLoading && mine.length === 0 ? (
@@ -112,7 +111,18 @@ export default function MaintainerPage() {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {mine.map((b) => (
-                  <BountyCard key={b.id} bounty={b} />
+                  <BountyCard
+                    key={b.id}
+                    repoName={b.repo}
+                    issueTitle={b.issueTitle}
+                    bountyAmount={b.amount}
+                    walletAddress={b.contributor ?? b.maintainer}
+                    issueNumber={b.issueNumber}
+                    labels={[b.language, ...b.labels]}
+                    mode={b.mode}
+                    status={b.status}
+                    href={`/reward/${b.id}`}
+                  />
                 ))}
               </div>
             )}
