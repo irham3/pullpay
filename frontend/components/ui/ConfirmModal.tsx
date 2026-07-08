@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Button } from "./Button";
 import { AlertCircle } from "lucide-react";
 
@@ -25,6 +26,13 @@ export function ConfirmModal({
   cancelText = "Cancel",
   destructive = false,
 }: ConfirmModalProps) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -39,10 +47,10 @@ export function ConfirmModal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
+  return createPortal(
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-0">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-[#0B0F14]/80 backdrop-blur-sm transition-opacity" 
@@ -50,7 +58,7 @@ export function ConfirmModal({
       />
       
       {/* Modal */}
-      <div className="relative z-[101] w-full max-w-md overflow-hidden rounded-[12px] border border-border bg-surface p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:rounded-[16px]">
+      <div className="relative z-101 w-full max-w-md overflow-hidden rounded-[12px] border border-border bg-surface p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:rounded-[16px]">
         <div className="flex gap-4">
           <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${destructive ? 'bg-bad/10 text-bad' : 'bg-accent/10 text-accent'}`}>
             <AlertCircle className="h-5 w-5" />
@@ -78,6 +86,7 @@ export function ConfirmModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
