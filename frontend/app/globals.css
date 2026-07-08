@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0B0F14;
-  --surface: rgba(30, 35, 41, 0.82);
-  --surface-2: #262C33;
-  --border: rgba(66, 133, 244, 0.18);
-  --text: #F4F7FB;
-  --muted: #AAB4C0;
-  --accent: #4285F4;
-  --accent-hover: #6EA8FF;
-  --ok: #4285F4;
+  --bg: #0E0F13;
+  --surface: #181A20;
+  --surface-2: #1F2229;
+  --border: rgba(255, 255, 255, 0.07);
+  --text: #E6E7EB;
+  --muted: #9498A3;
+  --accent: #5C6BE6;
+  --accent-hover: #7583ED;
+  --ok: #4ADE80;
   --warn: #E0B341;
   --bad: #FF0420;
 

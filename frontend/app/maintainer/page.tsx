@@ -13,7 +13,7 @@ import { BountyCard } from "@/components/bounty/BountyCard";
 import { StatCard } from "@/components/onchain/StatCard";
 import { Button } from "@/components/ui/Button";
 import { ConnectButton } from "@/components/layout/ConnectButton";
-import { RoleTabs } from "@/components/layout/RoleTabs";
+import { MaintainerGithubCard } from "@/components/onchain/MaintainerGithubCard";
 
 export default function MaintainerPage() {
   const { address, isConnected } = useAccount();
@@ -63,69 +63,65 @@ export default function MaintainerPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
-      <RoleTabs />
-
-      <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-text">
-            Maintainer dashboard
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            Rewards you funded. Connect the repo, merge a PR, then trigger the
-            payout.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/create">Create reward</Link>
-        </Button>
-      </div>
-
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="USDC balance">
-          {balance !== undefined
-            ? Number(formatUnits(balance, USDC_DECIMALS)).toLocaleString("en-US")
-            : DEMO_MODE
-              ? "-"
-              : "0"}
-        </StatCard>
-        <StatCard label="Locked">${totalFunded.toLocaleString("en-US")}</StatCard>
-        <StatCard label="Paid">${paidOut.toLocaleString("en-US")}</StatCard>
-        <StatCard label="Active">{active}</StatCard>
-      </div>
-
-      <div className="mt-8">
-        {isLoading && mine.length === 0 ? (
-          <div className="rounded-[10px] border border-dashed border-border p-12 text-center text-sm text-muted">
-            Loading your rewards...
-          </div>
-        ) : mine.length === 0 ? (
-          <div className="rounded-[10px] border border-dashed border-border p-12 text-center">
-            <p className="text-sm text-text">No rewards funded yet.</p>
-            <p className="mt-1 text-sm text-muted">
-              Create one reward for an open GitHub issue.
-            </p>
-            <Button asChild className="mt-4">
-              <Link href="/create">Create your first reward</Link>
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-text">
+                Your rewards
+              </h1>
+              <p className="mt-1 text-sm text-muted">
+                Bounties you funded. Merge a PR (via GitHub App) or release directly
+                to pay a contributor.
+              </p>
+            </div>
+            <Button asChild>
+              <Link href="/create">Create reward</Link>
             </Button>
           </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {mine.map((b) => (
-              <BountyCard
-                key={b.id}
-                repoName={b.repo}
-                issueTitle={b.issueTitle}
-                bountyAmount={b.amount}
-                walletAddress={b.contributor ?? b.maintainer}
-                issueNumber={b.issueNumber}
-                labels={[b.language, ...b.labels]}
-                mode={b.mode}
-                status={b.status}
-                href={`/reward/${b.id}`}
-              />
-            ))}
+
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard label="USDC balance">
+              {balance !== undefined
+                ? Number(formatUnits(balance, USDC_DECIMALS)).toLocaleString("en-US")
+                : DEMO_MODE
+                  ? "—"
+                  : "0"}
+            </StatCard>
+            <StatCard label="You funded">${totalFunded.toLocaleString("en-US")}</StatCard>
+            <StatCard label="Paid out">${paidOut.toLocaleString("en-US")}</StatCard>
+            <StatCard label="Active">{active}</StatCard>
           </div>
-        )}
+          </div>
+
+          <div className="mt-8">
+            {isLoading && mine.length === 0 ? (
+              <div className="rounded-[10px] border border-dashed border-border p-12 text-center text-sm text-muted">
+                Reading your rewards from the chain…
+              </div>
+            ) : mine.length === 0 ? (
+              <div className="rounded-[10px] border border-dashed border-border p-12 text-center">
+                <p className="text-sm text-text">You haven’t funded any rewards yet.</p>
+                <p className="mt-1 text-sm text-muted">
+                  Lock USDC against one of your open GitHub issues.
+                </p>
+                <Button asChild className="mt-4">
+                  <Link href="/create">Create your first reward</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {mine.map((b) => (
+                  <BountyCard key={b.id} bounty={b} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <MaintainerGithubCard />
+        </div>
       </div>
     </main>
   );

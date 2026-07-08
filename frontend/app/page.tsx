@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { HeroStats } from "@/components/HeroStats";
+import { RedirectIfConnected } from "@/components/RedirectIfConnected";
+
 import {
   ArrowRight,
   CheckCircle2,
@@ -104,7 +108,38 @@ const TIER_DATA = [
 export default function Home() {
   return (
     <main className="flex-1">
-      <Hero />
+      <RedirectIfConnected />
+      {/* Hero */}
+      <section className="dot-grid border-b border-border">
+        <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+          <div className="max-w-3xl">
+            <span className="reveal inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted">
+              <span className="shiny">Trust-minimized OSS rewards</span>
+              <span className="text-muted">· on Optimism</span>
+            </span>
+            <h1 className="reveal mt-6 text-4xl font-semibold leading-[1.05] tracking-tight text-text sm:text-6xl">
+              Merge the PR.
+              <br />
+              The contributor gets paid.
+            </h1>
+            <p className="reveal mt-6 max-w-xl text-lg text-muted">
+              A maintainer locks USDC in escrow and adds one workflow file. When a
+              pull request is merged and verified — decentrally, via UMA — the
+              contributor is paid in USDC with no gas, and the work is recorded as
+              on-chain reputation.
+            </p>
+            <div className="reveal mt-8 flex flex-wrap items-center gap-3">
+              <Button asChild size="lg">
+                <Link href="/create">
+                  Create a reward
+                  <ArrowRight className="ml-1.5 h-4 w-4" strokeWidth={1.75} />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/bounties">Explore bounties</Link>
+              </Button>
+            </div>
+          </div>
 
       <section className="relative overflow-hidden border-b border-border">
         <div className="section-grid absolute inset-0 opacity-40" />

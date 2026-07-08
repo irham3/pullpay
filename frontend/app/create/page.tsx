@@ -103,6 +103,7 @@ function CreateRewardContent() {
     state: string;
   } | null>(null);
 
+
   // Shared form state.
   const [title, setTitle] = React.useState("");
   const [amount, setAmount] = React.useState("");
@@ -431,16 +432,12 @@ function CreateRewardContent() {
                           {ghUser}
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          document.cookie = "pullpay_gh=; max-age=0; path=/";
-                          window.location.href = "/create";
-                        }}
+                      <Link
+                        href="/maintainer"
                         className="text-xs text-muted hover:text-text transition-colors"
                       >
-                        Disconnect
-                      </button>
+                        Manage connection
+                      </Link>
                     </div>
 
                     {/* Repo picker */}
