@@ -2,14 +2,19 @@ import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
+  Code2,
   Fuel,
   GitPullRequest,
+  Globe,
   Lock,
   Scale,
   ShieldCheck,
   Sparkles,
   Terminal,
+  TrendingUp,
+  Users,
   Wallet,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { HeroStats } from "@/components/HeroStats";
@@ -107,6 +112,91 @@ const TIER_DATA = [
     points: [
       "PullPay sends the payout request to UMA before payment.",
       "False requests can be disputed before funds move.",
+    ],
+  },
+];
+
+const GTM_SEGMENTS = [
+  {
+    icon: Users,
+    title: "OSS Maintainers",
+    description:
+      "Project leads and core teams who want to reward external contributors without managing manual payments or treasury complexity.",
+    channel: "GitHub Marketplace · Dev Twitter · OSS forums",
+  },
+  {
+    icon: Code2,
+    title: "Open-Source Contributors",
+    description:
+      "Developers who want to earn USDC for merged PRs — gasless, no wallet setup needed to receive payouts.",
+    channel: "GitHub notifications · Bounty boards · Discord communities",
+  },
+  {
+    icon: Globe,
+    title: "Web3 DAOs & Protocols",
+    description:
+      "Decentralised teams that fund public-goods development and need on-chain proof of contribution via EAS attestations.",
+    channel: "Optimism ecosystem · Gitcoin · Farcaster",
+  },
+];
+
+const REVENUE_STREAMS = [
+  {
+    icon: Zap,
+    name: "Protocol Fee",
+    description:
+      "A small percentage fee is taken from each USDC payout when a reward is claimed, generating revenue proportional to platform activity.",
+    tag: "per payout",
+    color: "#C084FC",
+  },
+  {
+    icon: ShieldCheck,
+    name: "Safeguarded Mode Premium",
+    description:
+      "Rewards that opt into UMA dispute resolution pay an additional verification fee to cover the oracle cost and protocol margin.",
+    tag: "per verification",
+    color: "#A78BFA",
+  },
+  {
+    icon: TrendingUp,
+    name: "Pooled Reward Facilitation",
+    description:
+      "Multiple funders can pool USDC into one reward. PullPay earns a facilitation margin on larger coordinated funding rounds.",
+    tag: "per pool",
+    color: "#8B5CF6",
+  },
+];
+
+const PRICING_PLANS = [
+  {
+    icon: GitPullRequest,
+    name: "Instant",
+    price: "~1%",
+    priceLabel: "protocol fee per payout",
+    highlight: false,
+    description: "Best for solo maintainers and low-risk issue rewards.",
+    features: [
+      "Single maintainer funds the reward",
+      "GitHub merge verification only",
+      "No UMA bond required",
+      "Contributor can escalate if stuck",
+      "Gas sponsored for contributor",
+    ],
+  },
+  {
+    icon: Scale,
+    name: "Safeguarded",
+    price: "~2%",
+    priceLabel: "protocol fee + UMA cost",
+    highlight: true,
+    description:
+      "Best for DAOs, pooled rewards, and higher-value contributions.",
+    features: [
+      "Multiple funders can pool USDC",
+      "UMA dispute-resolution layer",
+      "Bond required to submit payout",
+      "Dispute window before funds move",
+      "On-chain EAS proof of payout",
     ],
   },
 ];
@@ -260,6 +350,72 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ── GTM section ── */}
+        <section className="border-b border-border">
+          <div className="mx-auto max-w-6xl px-6 py-20">
+            <div className="text-center">
+              <Eyebrow>Go-to-Market</Eyebrow>
+              <h2 className="mt-3 text-2xl font-semibold text-text sm:text-3xl">
+                Who PullPay is built for.
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-muted">
+                PullPay targets the open-source ecosystem — from solo project
+                maintainers to well-funded Web3 protocols — distributed through
+                the channels developers already use.
+              </p>
+            </div>
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              {GTM_SEGMENTS.map((seg) => (
+                <GtmCard key={seg.title} {...seg} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Revenue Streams section ── */}
+        <section className="border-b border-border">
+          <div className="mx-auto max-w-6xl px-6 py-20">
+            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+              <div>
+                <Eyebrow>Revenue Streams</Eyebrow>
+                <h2 className="mt-3 max-w-2xl text-2xl font-semibold text-text sm:text-3xl">
+                  How PullPay sustains itself.
+                </h2>
+              </div>
+              <p className="max-w-sm text-sm leading-6 text-muted md:text-right">
+                Revenue is generated on-chain, proportional to platform usage —
+                no subscription lock-in for maintainers.
+              </p>
+            </div>
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
+              {REVENUE_STREAMS.map((stream) => (
+                <RevenueCard key={stream.name} {...stream} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Pricing / Plans section ── */}
+        <section className="border-b border-border">
+          <div className="mx-auto max-w-6xl px-6 py-20">
+            <div className="text-center">
+              <Eyebrow>Pricing</Eyebrow>
+              <h2 className="mt-3 text-2xl font-semibold text-text sm:text-3xl">
+                Simple, usage-based fees.
+              </h2>
+              <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-muted">
+                No monthly subscriptions. You only pay a small protocol fee when
+                a contributor is paid out.
+              </p>
+            </div>
+            <div className="mt-12 grid gap-6 md:grid-cols-2 md:max-w-3xl md:mx-auto">
+              {PRICING_PLANS.map((plan) => (
+                <PricingCard key={plan.name} {...plan} />
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="border-b border-border">
           <div className="mx-auto max-w-6xl px-6 py-20">
             <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:items-center">
@@ -320,6 +476,146 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
     <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-accent">
       {children}
     </span>
+  );
+}
+
+function GtmCard({
+  icon: Icon,
+  title,
+  description,
+  channel,
+}: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  title: string;
+  description: string;
+  channel: string;
+}) {
+  return (
+    <SpotlightCard
+      className="h-full bg-surface/78 transition-all hover:-translate-y-1 hover:border-[#C084FC]/45 hover:shadow-[0_0_28px_rgba(139,92,246,0.16)]"
+      spotlightColor="rgba(192, 132, 252, 0.22)"
+    >
+      <div className="grid h-11 w-11 place-items-center rounded-md border border-[#C084FC]/25 bg-bg text-accent shadow-[0_0_18px_rgba(139,92,246,0.12)]">
+        <Icon className="h-5 w-5" strokeWidth={1.75} />
+      </div>
+      <h3 className="mt-5 text-base font-semibold text-text">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-muted">{description}</p>
+      <div className="mt-5 rounded-md border border-white/10 bg-bg/50 px-3 py-2">
+        <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted mb-1">channels</div>
+        <div className="font-mono text-xs text-[#C4B5FD]">{channel}</div>
+      </div>
+    </SpotlightCard>
+  );
+}
+
+function RevenueCard({
+  icon: Icon,
+  name,
+  description,
+  tag,
+  color,
+}: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  name: string;
+  description: string;
+  tag: string;
+  color: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-surface p-6 backdrop-blur-md transition-all hover:-translate-y-1 hover:border-[#C084FC]/40 hover:shadow-[0_0_24px_rgba(139,92,246,0.14)]">
+      <div
+        className="grid h-11 w-11 place-items-center rounded-md border bg-bg"
+        style={{
+          borderColor: `${color}35`,
+          boxShadow: `0 0 18px ${color}20`,
+          color,
+        }}
+      >
+        <Icon className="h-5 w-5" strokeWidth={1.75} />
+      </div>
+      <div className="mt-5 flex items-center justify-between gap-2">
+        <h3 className="text-base font-semibold text-text">{name}</h3>
+        <span
+          className="rounded-full border px-2.5 py-1 font-mono text-[11px]"
+          style={{ borderColor: `${color}35`, color }}
+        >
+          {tag}
+        </span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-muted">{description}</p>
+    </div>
+  );
+}
+
+function PricingCard({
+  icon: Icon,
+  name,
+  price,
+  priceLabel,
+  highlight,
+  description,
+  features,
+}: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  name: string;
+  price: string;
+  priceLabel: string;
+  highlight: boolean;
+  description: string;
+  features: string[];
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-6 backdrop-blur-md transition-all ${
+        highlight
+          ? "border-[#C084FC]/50 bg-surface shadow-[0_0_36px_rgba(139,92,246,0.22)]"
+          : "border-border bg-surface/70"
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-md border border-[#C084FC]/25 bg-bg text-accent">
+            <Icon className="h-5 w-5" strokeWidth={1.75} />
+          </span>
+          <h3 className="text-lg font-semibold text-text">{name}</h3>
+        </div>
+        {highlight && (
+          <span className="rounded-full border border-[#C084FC]/35 bg-[#8B5CF6]/15 px-2.5 py-1 font-mono text-[11px] text-[#C4B5FD]">
+            recommended
+          </span>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <span className="text-4xl font-bold text-text">{price}</span>
+        <span className="ml-2 text-sm text-muted">{priceLabel}</span>
+      </div>
+
+      <p className="mt-3 text-sm leading-6 text-muted">{description}</p>
+
+      <ul className="mt-6 space-y-3">
+        {features.map((feature) => (
+          <li key={feature} className="flex items-start gap-2.5 text-sm text-muted">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
+            {feature}
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-8">
+        <Link
+          href="/create"
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition-all ${
+            highlight
+              ? "bg-[#8B5CF6] text-white shadow-[0_0_22px_rgba(139,92,246,0.32)] hover:bg-[#A78BFA]"
+              : "border border-border bg-bg text-text hover:border-[#C084FC]/40 hover:bg-surface"
+          }`}
+        >
+          Get started
+          <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+        </Link>
+      </div>
+    </div>
   );
 }
 
