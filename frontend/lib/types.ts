@@ -2,6 +2,22 @@ import type { UiStatus } from "./status";
 
 export type Mode = "Instant" | "Safeguarded";
 
+// A pull request a contributor opened against the funded issue. The contributor
+// establishes the issue↔PR relation (by referencing the issue in their PR);
+// PullPay records every such PR so the maintainer can pick which one to pay.
+export interface PullRequestRef {
+  number: number;
+  author: string | null; // GitHub login
+  title: string;
+  url: string;
+  state: "open" | "closed" | "merged";
+  createdAt?: number; // unix seconds
+  updatedAt?: number; // unix seconds
+  /** How the link was made: the contributor's PR referenced the issue, or the
+   * maintainer/relayer attached it. */
+  source: "webhook" | "contributor" | "manual";
+}
+
 export interface Bounty {
   id: `0x${string}`;
   repo: string;
@@ -22,7 +38,10 @@ export interface Bounty {
   fundingTx: `0x${string}`;
   /** Present while Verifying: unix seconds the liveness window closes. */
   livenessEndsAt?: number;
+  /** The PR chosen for payout (once one is merged/settled). */
   prNumber?: number;
+  /** Every candidate PR linked to this reward's issue. */
+  prs?: PullRequestRef[];
 }
 
 /**

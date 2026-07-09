@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
-import type { Bounty } from "@/lib/types";
+import type { Bounty, StoredReward } from "@/lib/types";
 import { OPEN_PHASE, statusMessage, type UiStatus } from "@/lib/status";
 import { Button } from "@/components/ui/Button";
 import { Loader2 } from "lucide-react";
@@ -47,10 +47,21 @@ export function StatusControl({ bounty }: { bounty: Bounty }) {
         setNote(data.error || "Could not update status");
       } else {
         setNote(`Status set to ${status}.`);
+        // Optimistically patch the caches the detail page + board read, so the
+        // pill flips immediately instead of waiting on a refetch (the refetch
+        // then reconciles). This is why the status "wasn't changing" before.
+        const key = bounty.id.toLowerCase();
+        qc.setQueryData<StoredReward | null>(
+          ["server-reward", key],
+          (prev) => (prev ? { ...prev, status } : prev)
+        );
+        qc.setQueryData<Bounty[]>(["server-rewards"], (prev) =>
+          Array.isArray(prev)
+            ? prev.map((r) => (r.id.toLowerCase() === key ? { ...r, status } : r))
+            : prev
+        );
         await qc.invalidateQueries({ queryKey: ["server-rewards"] });
-        await qc.invalidateQueries({
-          queryKey: ["server-reward", bounty.id.toLowerCase()],
-        });
+        await qc.invalidateQueries({ queryKey: ["server-reward", key] });
       }
     } catch (e) {
       setNote(e instanceof Error ? e.message.split("\n")[0] : "Signing failed");

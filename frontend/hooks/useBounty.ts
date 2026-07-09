@@ -93,6 +93,7 @@ export function useBounty(id: `0x${string}`) {
         labels: meta?.labels || [],
         fundingTx: meta?.fundingTx || ("0x" as `0x${string}`),
         prNumber: meta?.prNumber,
+        prs: meta?.prs,
       };
       return merged;
     }

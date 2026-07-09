@@ -8,6 +8,8 @@ import {
   setRewardForIssue,
   setInstallation,
   patchStoredReward,
+  getStoredReward,
+  upsertRewardPr,
 } from "@/lib/server/store";
 import { readReward, findRewardIdForIssue } from "@/lib/server/relayer";
 import { closingIssue } from "@/lib/server/github";
@@ -71,27 +73,49 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, note: "no reward for issue" });
       }
 
+      // Record the PR against the reward for every relevant action, so the
+      // maintainer sees the full field of candidate PRs (not just the merged one)
+      // and can choose which to accept. The contributor made the link by
+      // referencing the issue in their PR — no manual mapping needed.
+      const prState: "open" | "closed" | "merged" = pr.merged
+        ? "merged"
+        : pr.state === "closed"
+          ? "closed"
+          : "open";
+      await upsertRewardPr(rewardId, {
+        number: pr.number,
+        author: pr.user?.login ?? null,
+        title: pr.title ?? "",
+        url: pr.html_url ?? `https://github.com/${repo}/pull/${pr.number}`,
+        state: prState,
+        createdAt: pr.created_at
+          ? Math.floor(new Date(pr.created_at).getTime() / 1000)
+          : undefined,
+        updatedAt: Math.floor(Date.now() / 1000),
+        source: "webhook",
+      });
+
       if (action === "opened" || action === "reopened") {
         const reward = await readReward(rewardId);
         const amt = Number(formatUnits(reward.amount, USDC_DECIMALS));
         await comment(
           repo,
           pr.number,
-          `This PR is linked to a ${amt} USDC PullPay reward on issue #${issue}. If it is merged, PullPay can verify the merge and start payout.`
+          `This PR is linked to a ${amt} USDC PullPay reward on issue #${issue}. If it is merged, PullPay pays the PR author automatically — they just need to link their wallet at ${new URL(req.url).origin}/contributor`
         );
         await setPrStatus(repo, pr.head.sha, "pending", `Reward: ${amt} USDC - pays on merge`);
         // Reflect the open PR on the board so the reward reads "In Review".
-        await patchStoredReward(rewardId, {
-          status: "In Review",
-          prNumber: pr.number,
-          contributorHandle: pr.user?.login,
-        });
+        await patchStoredReward(rewardId, { status: "In Review" });
         return NextResponse.json({ ok: true, handled: "pr.opened" });
       }
 
-      // PR closed without merging → back to Open so it can be picked up again.
+      // PR closed without merging → back to Open if no other PR is still open.
       if (action === "closed" && !pr.merged) {
-        await patchStoredReward(rewardId, { status: "Open" });
+        const stored = await getStoredReward(rewardId);
+        const anyOpen = (stored?.prs ?? []).some((p) => p.state === "open");
+        await patchStoredReward(rewardId, {
+          status: anyOpen ? "In Review" : "Open",
+        });
         return NextResponse.json({ ok: true, handled: "pr.closed_unmerged" });
       }
 

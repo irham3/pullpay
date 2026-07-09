@@ -2,7 +2,7 @@ import "server-only";
 import { promises as fs } from "fs";
 import path from "path";
 import { Redis } from "@upstash/redis";
-import type { StoredReward } from "@/lib/types";
+import type { StoredReward, PullRequestRef } from "@/lib/types";
 import type { UiStatus } from "@/lib/status";
 
 // Unified key–value store: Upstash Redis when configured (works on Vercel
@@ -136,6 +136,26 @@ export async function patchStoredReward(
 
 export const setRewardStatus = (id: string, status: UiStatus) =>
   patchStoredReward(id, { status });
+
+// Attach or update a PR on a reward, de-duplicated by PR number. Returns the new
+// PR list (or null if the reward is unknown). Keeps the maintainer's view of
+// "which PRs are competing for this reward" in sync with GitHub.
+export async function upsertRewardPr(
+  id: string,
+  pr: PullRequestRef
+): Promise<PullRequestRef[] | null> {
+  const existing = await getStoredReward(id);
+  if (!existing) return null;
+  const prs = [...(existing.prs ?? [])];
+  const idx = prs.findIndex((p) => p.number === pr.number);
+  if (idx === -1) {
+    prs.unshift(pr);
+  } else {
+    prs[idx] = { ...prs[idx], ...pr };
+  }
+  await patchStoredReward(id, { prs });
+  return prs;
+}
 
 export async function listStoredRewards(): Promise<StoredReward[]> {
   const ids = (await kvGet<string[]>(REWARDS_INDEX)) ?? [];

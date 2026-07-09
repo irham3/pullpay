@@ -8,12 +8,13 @@ import { Lifecycle } from "@/components/onchain/Lifecycle";
 import { DisputePanel } from "@/components/onchain/DisputePanel";
 import { RewardActions } from "@/components/onchain/RewardActions";
 import { StatusControl } from "@/components/onchain/StatusControl";
+import { PullRequestsPanel } from "@/components/onchain/PullRequestsPanel";
 import { YamlPanel } from "@/components/onchain/YamlPanel";
 import { AddressChip } from "@/components/onchain/AddressChip";
 import { STATUS_META } from "@/lib/status";
 import { LANG_COLORS } from "@/lib/languages";
 import { timeFromNow } from "@/lib/format";
-import { ArrowLeft, ExternalLink, GitPullRequest } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 
 export function RewardDetailView({
   bounty,
@@ -73,29 +74,7 @@ export function RewardDetailView({
         <div className="space-y-6">
           <ProofPanel bounty={bounty} />
 
-          {bounty.prNumber && (
-            <div className="rounded-[10px] border border-border bg-surface p-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-text">
-                <GitPullRequest className="h-4 w-4 text-accent" strokeWidth={1.5} />
-                Linked pull request
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <a
-                  href={`https://github.com/${bounty.repo}/pull/${bounty.prNumber}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-mono text-text hover:text-accent"
-                >
-                  {bounty.repo} #{bounty.prNumber}
-                </a>
-                {bounty.contributorHandle && (
-                  <span className="text-muted">
-                    by <span className="text-text">@{bounty.contributorHandle}</span>
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+          <PullRequestsPanel bounty={bounty} />
 
           <DisputePanel bounty={bounty} />
 

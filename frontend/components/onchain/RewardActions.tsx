@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import { useAccount } from "wagmi";
-import { isAddress, stringToHex, type Address } from "viem";
+import { stringToHex } from "viem";
 import type { Bounty } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ConnectButton } from "@/components/layout/ConnectButton";
 import {
   useRefund,
-  useApproveAndRelease,
   useEscalate,
 } from "@/hooks/usePullPay";
 import { useResolveAssertion } from "@/hooks/useBounty";
@@ -27,11 +26,9 @@ export function RewardActions({
 }) {
   const { address, isConnected } = useAccount();
   const { refund, isRefunding } = useRefund();
-  const { approveAndRelease, isReleasing } = useApproveAndRelease();
   const { escalate, isEscalating } = useEscalate();
   const { resolve, isResolving } = useResolveAssertion();
 
-  const [contributor, setContributor] = React.useState("");
   const [pr, setPr] = React.useState("");
   const [note, setNote] = React.useState<string | null>(null);
   const [settling, setSettling] = React.useState(false);
@@ -107,40 +104,16 @@ export function RewardActions({
 
   const sections: React.ReactNode[] = [];
 
-  if (isMaintainer && isOpen && bounty.mode === "Instant") {
-    sections.push(
-      <div key="release" className="space-y-2">
-        <div className="text-xs text-muted">
-          Pay a contributor address now. Use this for Instant rewards.
-        </div>
-        <Input
-          mono
-          value={contributor}
-          onChange={(e) => setContributor(e.target.value)}
-          placeholder="0x... contributor address"
-        />
-        <Button
-          className="w-full"
-          disabled={isReleasing || !isAddress(contributor)}
-          onClick={() =>
-            guarded(
-              () => approveAndRelease(bounty.id, contributor as Address),
-              "Contributor paid. Reputation can be recorded."
-            )
-          }
-        >
-          {isReleasing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Pay contributor {bounty.amount} {bounty.token}
-        </Button>
-      </div>
-    );
-  }
-
+  // Payout is always resolved to the merged PR author's own linked wallet — the
+  // maintainer never types a contributor address. The primary path is the Pull
+  // requests panel ("Release payout" per PR); this is a fallback for a merged PR
+  // the webhook didn't capture (e.g. paste-URL rewards without the App).
   if (isMaintainer && isOpen && !DEMO_MODE) {
     sections.push(
       <div key="relayer" className="space-y-2">
         <div className="text-xs text-muted">
-          Enter the merged PR number. PullPay checks GitHub before payout.
+          Pay from a merged PR by number. PullPay verifies the merge on GitHub and
+          pays the PR author&apos;s linked wallet — no address needed.
         </div>
         <div className="flex gap-2">
           <Input

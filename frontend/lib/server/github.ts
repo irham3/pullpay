@@ -47,6 +47,37 @@ export async function verifyMerge(repo: string, pr: number): Promise<MergeInfo> 
   };
 }
 
+export interface PrInfo {
+  number: number;
+  title: string;
+  body: string;
+  author: string | null;
+  state: "open" | "closed" | "merged";
+  url: string;
+  createdAt: number; // unix seconds
+}
+
+// Fetch a PR's public metadata. Used to record a contributor-submitted PR and to
+// confirm it references the funded issue before linking it to a reward.
+export async function fetchPr(repo: string, pr: number): Promise<PrInfo> {
+  const res = await fetch(`${GH}/repos/${repo}/pulls/${pr}`, {
+    headers: headers(),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`GitHub PR lookup failed (${res.status})`);
+  const d = await res.json();
+  const merged = Boolean(d.merged || d.merged_at);
+  return {
+    number: d.number,
+    title: d.title ?? "",
+    body: d.body ?? "",
+    author: d.user?.login ?? null,
+    state: merged ? "merged" : d.state === "closed" ? "closed" : "open",
+    url: d.html_url ?? `https://github.com/${repo}/pull/${pr}`,
+    createdAt: d.created_at ? Math.floor(new Date(d.created_at).getTime() / 1000) : 0,
+  };
+}
+
 export interface IssueInfo {
   title: string;
   labels: string[];
