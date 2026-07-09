@@ -12,9 +12,9 @@ jobs:
           curl -X POST "https://pullpay-sigma.vercel.app/api/settle" \
             -H 'Content-Type: application/json' \
             -d '{
-              "rewardId": "0x98c81d82cf019d196482e32a361f70d580c40fa9f4408beb91ba8b737c7717aa",
+              "rewardId": "0xd49417a20d79e7c83680cc86c06b8bfc91e3c1f3eda0f0e601565abd766ca7bd",
               "repo": "irham3/pullpay",
               "pr": ${{ github.event.pull_request.number }},
-              "issue": 2,
+              "issue": 5,
               "author": "${{ github.event.pull_request.user.login }}"
             }'
