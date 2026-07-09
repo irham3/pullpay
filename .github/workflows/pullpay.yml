@@ -1,0 +1,20 @@
+name: PullPay
+on:
+  pull_request:
+    types: [closed]
+jobs:
+  settle:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify PullPay relayer
+        run: |
+          curl -X POST "https://pullpay-sigma.vercel.app/api/settle" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "rewardId": "0x98c81d82cf019d196482e32a361f70d580c40fa9f4408beb91ba8b737c7717aa",
+              "repo": "irham3/pullpay",
+              "pr": ${{ github.event.pull_request.number }},
+              "issue": 2,
+              "author": "${{ github.event.pull_request.user.login }}"
+            }'
