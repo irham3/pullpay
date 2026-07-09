@@ -3,13 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import { loadLocalRewards, loadWorkingOn } from "@/lib/localStore";
-import { useOnchainRewards } from "@/hooks/useOnchainRewards";
+import { loadWorkingOn } from "@/lib/localStore";
+import { useRewards } from "@/hooks/useRewards";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { DEMO_MODE } from "@/lib/contracts/addresses";
 import { usd, timeFromNow } from "@/lib/format";
 import { explorerTx } from "@/lib/explorer";
-import type { Bounty } from "@/lib/types";
 import { BountyCard } from "@/components/bounty/BountyCard";
 import { StatCard } from "@/components/onchain/StatCard";
 import { LinkGithubCard } from "@/components/onchain/LinkGithubCard";
@@ -18,17 +17,15 @@ import { Award, ExternalLink } from "lucide-react";
 
 export default function ContributorPage() {
   const { address, isConnected } = useAccount();
-  const { data: onchain = [] } = useOnchainRewards();
+  const { rewards: pool } = useRewards();
   const { data: profile } = useContributorProfile(address ?? "");
 
   const [workingIds, setWorkingIds] = React.useState<string[]>([]);
-  const [local, setLocal] = React.useState<Bounty[]>([]);
   const [githubLinked, setGithubLinked] = React.useState(false);
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load local flags on mount
     setWorkingIds(loadWorkingOn());
-    setLocal(loadLocalRewards());
   }, []);
 
   React.useEffect(() => {
@@ -36,16 +33,6 @@ export default function ContributorPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- read cookie on mount
     setGithubLinked(Boolean(m));
   }, []);
-
-  const pool = React.useMemo(() => {
-    const seen = new Set<string>();
-    return [...onchain, ...local].filter((b) => {
-      const key = b.id.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [onchain, local]);
 
   const working = pool.filter((b) =>
     workingIds.some((x) => x.toLowerCase() === b.id.toLowerCase())

@@ -7,6 +7,7 @@ import { ProofPanel } from "@/components/onchain/ProofPanel";
 import { Lifecycle } from "@/components/onchain/Lifecycle";
 import { DisputePanel } from "@/components/onchain/DisputePanel";
 import { RewardActions } from "@/components/onchain/RewardActions";
+import { StatusControl } from "@/components/onchain/StatusControl";
 import { YamlPanel } from "@/components/onchain/YamlPanel";
 import { AddressChip } from "@/components/onchain/AddressChip";
 import { STATUS_META } from "@/lib/status";
@@ -147,7 +148,10 @@ export function RewardDetailView({
             <div className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted">
               What you can do
             </div>
-            <RewardActions bounty={bounty} assertionId={assertionId} />
+            <div className="space-y-4">
+              <StatusControl bounty={bounty} />
+              <RewardActions bounty={bounty} assertionId={assertionId} />
+            </div>
           </div>
         </div>
       </div>

@@ -4,11 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
-import { loadLocalRewards } from "@/lib/localStore";
-import { useOnchainRewards } from "@/hooks/useOnchainRewards";
+import { useRewards } from "@/hooks/useRewards";
 import { useUsdcBalance } from "@/hooks/usePullPay";
 import { USDC_DECIMALS, DEMO_MODE } from "@/lib/contracts/addresses";
-import type { Bounty } from "@/lib/types";
 import { BountyCard } from "@/components/bounty/BountyCard";
 import { StatCard } from "@/components/onchain/StatCard";
 import { Button } from "@/components/ui/Button";
@@ -18,24 +16,14 @@ import { MaintainerGithubCard } from "@/components/onchain/MaintainerGithubCard"
 export default function MaintainerPage() {
   const { address, isConnected } = useAccount();
   const { data: balance } = useUsdcBalance();
-  const { data: onchain = [], isLoading } = useOnchainRewards();
-
-  const [local, setLocal] = React.useState<Bounty[]>([]);
-  React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- load local cache on mount
-    setLocal(loadLocalRewards());
-  }, []);
+  const { rewards, isLoading } = useRewards();
 
   const mine = React.useMemo(() => {
     if (!address) return [];
-    const seen = new Set<string>();
-    return [...onchain, ...local].filter((b) => {
-      const key = b.id.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return b.maintainer.toLowerCase() === address.toLowerCase();
-    });
-  }, [onchain, local, address]);
+    return rewards.filter(
+      (b) => b.maintainer.toLowerCase() === address.toLowerCase()
+    );
+  }, [rewards, address]);
 
   const totalFunded = mine.reduce((sum, b) => sum + b.amount, 0);
   const paidOut = mine

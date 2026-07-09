@@ -1,14 +1,13 @@
 "use client";
 
 import * as React from "react";
-import type { Bounty, Mode } from "@/lib/types";
+import type { Mode } from "@/lib/types";
 import type { UiStatus } from "@/lib/status";
 import { BountyCard } from "./BountyCard";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
-import { loadLocalRewards } from "@/lib/localStore";
-import { useOnchainRewards } from "@/hooks/useOnchainRewards";
+import { useRewards } from "@/hooks/useRewards";
 import { DEMO_MODE } from "@/lib/contracts/addresses";
 import Link from "next/link";
 
@@ -31,24 +30,7 @@ export function BountyBoard() {
   const [lang, setLang] = React.useState<string>("All");
   const [sort, setSort] = React.useState<SortKey>("recent");
 
-  const [local, setLocal] = React.useState<Bounty[]>([]);
-  React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- load local cache on mount
-    setLocal(loadLocalRewards());
-  }, []);
-
-  const { data: onchain = [], isLoading: onchainLoading } = useOnchainRewards();
-
-  const allBounties = React.useMemo(() => {
-    const merged = [...onchain, ...local];
-    const seen = new Set<string>();
-    return merged.filter((b) => {
-      const key = b.id.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [onchain, local]);
+  const { rewards: allBounties, isLoading: onchainLoading } = useRewards();
 
   const languages = React.useMemo(
     () => ["All", ...Array.from(new Set(allBounties.map((b) => b.language)))],

@@ -95,3 +95,29 @@ export const LIFECYCLE: UiStatus[] = [
   "Verifying",
   "Paid",
 ];
+
+// The off-chain review phases a reward can sit in while still just "Funded"
+// on-chain. GitHub (webhook) and the maintainer drive these; the contract can't.
+export const OPEN_PHASE: UiStatus[] = [
+  "Open",
+  "In Review",
+  "Changes Requested",
+  "Merged",
+];
+
+// Reconcile the authoritative on-chain status with the shared off-chain "soft"
+// status. Anything past Funded (Verifying/Paid/Refunded/Rejected) is real money
+// moving and always wins; while still Funded ("Open"), show the review phase that
+// GitHub or the maintainer set so the board reflects PR progress.
+export function mergeUiStatus(onchain: UiStatus, soft?: UiStatus): UiStatus {
+  if (onchain !== "Open") return onchain;
+  if (soft && OPEN_PHASE.includes(soft)) return soft;
+  return onchain;
+}
+
+// The exact string a maintainer's wallet signs to authorise a manual status
+// change. Defined once here so the client (signing) and the API route (verifying)
+// can never drift out of sync.
+export function statusMessage(id: string, status: string, ts: number): string {
+  return `PullPay status update\nreward: ${id.toLowerCase()}\nstatus: ${status}\nts: ${ts}`;
+}

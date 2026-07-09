@@ -2,6 +2,8 @@ import "server-only";
 import { promises as fs } from "fs";
 import path from "path";
 import { Redis } from "@upstash/redis";
+import type { StoredReward } from "@/lib/types";
+import type { UiStatus } from "@/lib/status";
 
 // Unified key–value store: Upstash Redis when configured (works on Vercel
 // serverless), else a local JSON file for dev. Same API either way.
@@ -85,6 +87,54 @@ export const setRewardForIssue = (repo: string, issue: number, rewardId: string)
   kvSet(issueKey(repo, issue), rewardId);
 export const getRewardForIssue = (repo: string, issue: number) =>
   kvGet<string>(issueKey(repo, issue));
+
+// ---- Rewards (shared, cross-user) ----
+// The board/detail pages used to read rewards from per-browser localStorage, so
+// each user only ever saw rewards they created themselves. Rewards now live in
+// the shared KV store so every visitor sees every funded reward, and the GitHub
+// webhook can advance a reward's "soft" status (In Review / Merged) that on-chain
+// enums cannot represent. On-chain remains the source of truth for money.
+const rewardKey = (id: string) => `reward:${id.toLowerCase()}`;
+const REWARDS_INDEX = "rewards:index";
+
+async function addToIndex(id: string): Promise<void> {
+  const ids = (await kvGet<string[]>(REWARDS_INDEX)) ?? [];
+  const low = id.toLowerCase();
+  if (!ids.some((x) => x.toLowerCase() === low)) {
+    await kvSet(REWARDS_INDEX, [low, ...ids]);
+  }
+}
+
+export async function saveReward(r: StoredReward): Promise<void> {
+  const record = { ...r, updatedAt: Math.floor(Date.now() / 1000) };
+  await kvSet(rewardKey(r.id), record);
+  await addToIndex(r.id);
+}
+
+export const getStoredReward = (id: string) =>
+  kvGet<StoredReward>(rewardKey(id));
+
+// Merge a partial update into an existing stored reward. No-op if unknown, so a
+// webhook for a reward created on a different environment won't resurrect a ghost.
+export async function patchStoredReward(
+  id: string,
+  patch: Partial<StoredReward>
+): Promise<StoredReward | null> {
+  const existing = await getStoredReward(id);
+  if (!existing) return null;
+  const next = { ...existing, ...patch, updatedAt: Math.floor(Date.now() / 1000) };
+  await kvSet(rewardKey(id), next);
+  return next;
+}
+
+export const setRewardStatus = (id: string, status: UiStatus) =>
+  patchStoredReward(id, { status });
+
+export async function listStoredRewards(): Promise<StoredReward[]> {
+  const ids = (await kvGet<string[]>(REWARDS_INDEX)) ?? [];
+  const records = await Promise.all(ids.map((id) => getStoredReward(id)));
+  return records.filter((r): r is StoredReward => Boolean(r));
+}
 
 // GitHub App installation id per account owner (to post comments/checks).
 const installKey = (owner: string) => `install:${owner.toLowerCase()}`;

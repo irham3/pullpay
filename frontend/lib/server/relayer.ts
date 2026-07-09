@@ -83,13 +83,23 @@ export async function findRewardIdForIssue(
   repo: string,
   issue: number
 ): Promise<`0x${string}` | null> {
-  const logs = await publicClient.getLogs({
-    address: ESCROW_ADDRESS,
-    event: REWARD_CREATED,
-    fromBlock: DEPLOY_BLOCK,
-    toBlock: "latest",
-  });
-  const ids = Array.from(new Set(logs.map((l) => l.args.id as `0x${string}`)));
+  // Page through in bounded windows — public RPCs reject an unbounded
+  // DEPLOY_BLOCK→latest getLogs, which would make the webhook fail to link a
+  // merged PR to its reward.
+  const latest = await publicClient.getBlockNumber();
+  const STEP = 9_000n;
+  const idSet = new Set<`0x${string}`>();
+  for (let from = DEPLOY_BLOCK; from <= latest; from += STEP + 1n) {
+    const to = from + STEP > latest ? latest : from + STEP;
+    const chunk = await publicClient.getLogs({
+      address: ESCROW_ADDRESS,
+      event: REWARD_CREATED,
+      fromBlock: from,
+      toBlock: to,
+    });
+    for (const l of chunk) idSet.add(l.args.id as `0x${string}`);
+  }
+  const ids = Array.from(idSet);
   for (const id of ids) {
     try {
       const r = (await publicClient.readContract({

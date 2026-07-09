@@ -31,20 +31,29 @@ export function useOnchainRewards() {
     refetchInterval: 20_000,
     queryFn: async (): Promise<Bounty[]> => {
       if (!client) return [];
-      let logs: any[] = [];
+      const idSet = new Set<`0x${string}`>();
       try {
-        logs = await client.getLogs({
-          address: ESCROW_ADDRESS,
-          event: REWARD_CREATED,
-          fromBlock: DEPLOY_BLOCK,
-          toBlock: "latest",
-        });
+        // Public RPCs cap eth_getLogs to a bounded block range, so a single
+        // DEPLOY_BLOCK→latest scan silently throws and the board falls back to an
+        // empty on-chain list (which made rewards from other maintainers vanish).
+        // Page through in fixed windows so every reward is indexed regardless of
+        // how far the chain has advanced past the deploy block.
+        const latest = await client.getBlockNumber();
+        const STEP = 9_000n;
+        for (let from = DEPLOY_BLOCK; from <= latest; from += STEP + 1n) {
+          const to = from + STEP > latest ? latest : from + STEP;
+          const chunk = await client.getLogs({
+            address: ESCROW_ADDRESS,
+            event: REWARD_CREATED,
+            fromBlock: from,
+            toBlock: to,
+          });
+          for (const l of chunk) idSet.add(l.args.id as `0x${string}`);
+        }
       } catch (err) {
         console.error("useOnchainRewards getLogs error:", err);
       }
-      const ids = Array.from(
-        new Set(logs.map((l) => l.args.id as `0x${string}`))
-      );
+      const ids = Array.from(idSet);
       if (ids.length === 0) return [];
 
       const records = await client.multicall({

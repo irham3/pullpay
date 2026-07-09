@@ -7,6 +7,7 @@ import {
   getRewardForIssue,
   setRewardForIssue,
   setInstallation,
+  patchStoredReward,
 } from "@/lib/server/store";
 import { readReward, findRewardIdForIssue } from "@/lib/server/relayer";
 import { USDC_DECIMALS } from "@/lib/contracts/addresses";
@@ -83,7 +84,19 @@ export async function POST(req: Request) {
           `This PR is linked to a ${amt} USDC PullPay reward on issue #${issue}. If it is merged, PullPay can verify the merge and start payout.`
         );
         await setPrStatus(repo, pr.head.sha, "pending", `Reward: ${amt} USDC - pays on merge`);
+        // Reflect the open PR on the board so the reward reads "In Review".
+        await patchStoredReward(rewardId, {
+          status: "In Review",
+          prNumber: pr.number,
+          contributorHandle: pr.user?.login,
+        });
         return NextResponse.json({ ok: true, handled: "pr.opened" });
+      }
+
+      // PR closed without merging → back to Open so it can be picked up again.
+      if (action === "closed" && !pr.merged) {
+        await patchStoredReward(rewardId, { status: "Open" });
+        return NextResponse.json({ ok: true, handled: "pr.closed_unmerged" });
       }
 
       if (action === "closed" && pr.merged) {
@@ -107,6 +120,13 @@ export async function POST(req: Request) {
             action2 === "settleInstant" ? "success" : "pending",
             action2 === "settleInstant" ? "Reward paid" : "Reward verifying"
           );
+          // Mark Merged in the shared store; on-chain state then drives the rest
+          // (Verifying → Paid) via mergeUiStatus at render time.
+          await patchStoredReward(rewardId, {
+            status: "Merged",
+            prNumber: pr.number,
+            contributorHandle: pr.user?.login,
+          });
         } else {
           await comment(
             repo,
@@ -118,6 +138,28 @@ export async function POST(req: Request) {
         }
         return NextResponse.json(result.body, { status: result.status });
       }
+    }
+
+    // A review asking for changes moves the reward to "Changes Requested" so the
+    // board matches GitHub; an approval returns it to "In Review".
+    if (event === "pull_request_review") {
+      const pr = payload.pull_request;
+      const repo = payload.repository?.full_name as string;
+      const state = String(payload.review?.state || "").toLowerCase();
+      const issue = closingIssue(`${pr?.title}\n${pr?.body}`);
+      if (!repo || !issue) {
+        return NextResponse.json({ ok: true, note: "no linked issue" });
+      }
+      const rewardId = await resolveRewardId(repo, issue);
+      if (!rewardId) {
+        return NextResponse.json({ ok: true, note: "no reward for issue" });
+      }
+      if (state === "changes_requested") {
+        await patchStoredReward(rewardId, { status: "Changes Requested" });
+      } else if (state === "approved") {
+        await patchStoredReward(rewardId, { status: "In Review" });
+      }
+      return NextResponse.json({ ok: true, handled: `review.${state}` });
     }
 
     return NextResponse.json({ ok: true, ignored: event });

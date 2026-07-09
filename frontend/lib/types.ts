@@ -25,6 +25,17 @@ export interface Bounty {
   prNumber?: number;
 }
 
+/**
+ * A reward as persisted in the shared server KV store. Same shape as {@link Bounty}
+ * plus a write timestamp. This is the cross-user source of truth for metadata
+ * (title/labels/language) and the "soft" off-chain status (In Review / Merged),
+ * which on-chain state alone cannot express. On-chain terminal states still win
+ * at render time — see the merge in the rewards hooks.
+ */
+export interface StoredReward extends Bounty {
+  updatedAt?: number;
+}
+
 export interface Attestation {
   uid: `0x${string}`;
   repo: string;
