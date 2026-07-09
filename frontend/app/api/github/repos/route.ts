@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { appOctokit, githubAppConfigured, installationOctokit } from "@/lib/server/githubApp";
+import {
+  githubSessionFromRequest,
+  githubUserCanWriteRepo,
+} from "@/lib/server/githubSession";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,13 +14,18 @@ export const dynamic = "force-dynamic";
 // they actually own (instead of typing freeform text).
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const user = searchParams.get("user")?.toLowerCase();
+  const session = await githubSessionFromRequest(req);
+  const userParam = searchParams.get("user")?.toLowerCase();
 
-  if (!user) {
+  if (!session) {
     return NextResponse.json(
-      { error: "user query param required" },
-      { status: 400 }
+      { error: "GitHub session required" },
+      { status: 401 }
     );
+  }
+  const user = session.login.toLowerCase();
+  if (userParam && userParam !== user) {
+    return NextResponse.json({ error: "GitHub user mismatch" }, { status: 403 });
   }
 
   if (!githubAppConfigured()) {
@@ -48,15 +57,20 @@ export async function GET(req: Request) {
       });
 
       for (const r of data.repositories ?? []) {
-        // For user-level installations, match by account login.
-        // For org installations, include all repos (user is implicitly a member).
-        if (accountLogin === user || inst.target_type === "Organization") {
-          repos.push({
-            full_name: r.full_name,
-            language: r.language ?? null,
-            private: r.private,
-          });
-        }
+        const sameUserInstallation = accountLogin === user;
+        const canWrite =
+          sameUserInstallation ||
+          (await githubUserCanWriteRepo(
+            r.full_name,
+            session.accessToken,
+            session.login
+          ));
+        if (!canWrite) continue;
+        repos.push({
+          full_name: r.full_name,
+          language: r.language ?? null,
+          private: r.private,
+        });
       }
     }
 

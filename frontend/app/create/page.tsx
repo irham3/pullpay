@@ -51,9 +51,10 @@ function GithubIcon({ className, ...props }: React.SVGProps<SVGSVGElement> & { s
 
 // ---------- Types ----------
 type ModeVal = (typeof MODE)[keyof typeof MODE];
-type SourceMode = "github" | "manual";
+type SourceMode = "github" | "new" | "manual";
 type IssueItem = { number: number; title: string; labels: string[]; state: string; url: string };
 type RepoItem = { full_name: string; language: string | null; private: boolean };
+type CreatedIssueItem = IssueItem & { language: string | null };
 
 const BOND_DEFAULT = 10; // USDC bond bundled for Safeguarded (PRD §19.1)
 
@@ -62,6 +63,14 @@ function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
+}
+
+function parseLabelInput(value: string): string[] {
+  return value
+    .split(",")
+    .map((label) => label.trim())
+    .filter(Boolean)
+    .slice(0, 10);
 }
 
 // ---------- Component ----------
@@ -90,6 +99,10 @@ function CreateRewardContent() {
   const [selectedIssue, setSelectedIssue] = React.useState<IssueItem | null>(null);
   const [issueSearch, setIssueSearch] = React.useState("");
 
+  // Create-new-issue state.
+  const [newIssueLabels, setNewIssueLabels] = React.useState("");
+  const [createdIssue, setCreatedIssue] = React.useState<CreatedIssueItem | null>(null);
+
   // Manual URL state.
   const [manualUrl, setManualUrl] = React.useState("");
   const [manualValidating, setManualValidating] = React.useState(false);
@@ -110,7 +123,7 @@ function CreateRewardContent() {
   const [criteria, setCriteria] = React.useState("");
   const [deadlineDays, setDeadlineDays] = React.useState("30");
   const [mode, setMode] = React.useState<ModeVal>(MODE.Safeguarded);
-  const [step, setStep] = React.useState<"form" | "approving" | "creating" | "done">("form");
+  const [step, setStep] = React.useState<"form" | "issuing" | "approving" | "creating" | "done">("form");
   const [error, setError] = React.useState<string | null>(null);
   const [createdId, setCreatedId] = React.useState<`0x${string}` | null>(null);
 
@@ -119,17 +132,27 @@ function CreateRewardContent() {
 
   // Derived values.
   const repo =
-    sourceMode === "github"
+    sourceMode === "github" || sourceMode === "new"
       ? selectedRepo
       : manualValidated?.full_name ?? "";
   const issueNumber =
     sourceMode === "github"
       ? selectedIssue?.number ?? 0
-      : manualValidated?.issue ?? 0;
+      : sourceMode === "new"
+        ? createdIssue?.number ?? 0
+        : manualValidated?.issue ?? 0;
   const amountNum = Number(amount) || 0;
   const bond = mode === MODE.Safeguarded ? BOND_DEFAULT : 0;
   const total = amountNum + bond;
-  const valid = repo.includes("/") && issueNumber > 0 && amountNum > 0;
+  const sourceReady =
+    sourceMode === "github"
+      ? Boolean(selectedIssue)
+      : sourceMode === "new"
+        ? Boolean(selectedRepo)
+        : Boolean(manualValidated);
+  const canResolveIssue =
+    sourceMode === "new" ? title.trim().length >= 3 : issueNumber > 0;
+  const valid = repo.includes("/") && sourceReady && canResolveIssue && amountNum > 0;
 
   const rewardIdPreview = React.useMemo(() => {
     if (!repo.includes("/") || !issueNumber) return null;
@@ -138,7 +161,7 @@ function CreateRewardContent() {
 
   // ---------- Fetch repos when GitHub user is known ----------
   React.useEffect(() => {
-    if (!ghUser || sourceMode !== "github") return;
+    if (!ghUser || sourceMode === "manual") return;
     let ignore = false;
     const controller = new AbortController();
     (async () => {
@@ -233,67 +256,139 @@ function CreateRewardContent() {
     }
   }
 
+  function buildNewIssueBody() {
+    const body = criteria.trim();
+    const footer = [
+      "---",
+      "Created from PullPay. Funding proof will be posted here after the reward is locked.",
+    ].join("\n");
+    return body ? `${body}\n\n${footer}` : footer;
+  }
+
+  async function createGitHubIssueForReward(): Promise<CreatedIssueItem> {
+    if (createdIssue) return createdIssue;
+    if (!selectedRepo || title.trim().length < 3) {
+      throw new Error("Choose a repository and add an issue title.");
+    }
+
+    const labels = parseLabelInput(newIssueLabels);
+    if (DEMO_MODE) {
+      setStep("issuing");
+      await new Promise((r) => setTimeout(r, 600));
+      const simulated: CreatedIssueItem = {
+        number: Math.floor(Date.now() / 1000) % 100000,
+        title: title.trim(),
+        labels,
+        state: "open",
+        url: `https://github.com/${selectedRepo}/issues/new`,
+        language: repos.find((r) => r.full_name === selectedRepo)?.language ?? null,
+      };
+      setCreatedIssue(simulated);
+      return simulated;
+    }
+
+    setStep("issuing");
+    const res = await fetch("/api/github/issues", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        repo: selectedRepo,
+        title: title.trim(),
+        body: buildNewIssueBody(),
+        labels,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to create GitHub issue");
+    }
+
+    const created: CreatedIssueItem = {
+      number: data.issue,
+      title: data.title,
+      labels: data.labels ?? [],
+      state: data.state ?? "open",
+      url: data.url,
+      language: data.language ?? null,
+    };
+    setCreatedIssue(created);
+    setTitle(created.title);
+    return created;
+  }
+
   // ---------- Submit ----------
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!valid) return;
 
-    const id = computeRewardId(repo, issueNumber);
-    const amountParsed = parseUnits(amount, USDC_DECIMALS);
-    const bondParsed = parseUnits(String(bond), USDC_DECIMALS);
-    const totalParsed = amountParsed + bondParsed;
-    const criteriaHash = criteriaHashFrom(criteria || title);
-    const deadlineSec =
-      Math.floor(Date.now() / 1000) + Number(deadlineDays) * 86400;
-    const deadline = BigInt(deadlineSec);
-
-    const issueTitle =
-      sourceMode === "github"
-        ? selectedIssue?.title ?? title
-        : manualValidated?.title ?? title;
-    const language =
-      sourceMode === "github"
-        ? repos.find((r) => r.full_name === selectedRepo)?.language ?? "TypeScript"
-        : manualValidated?.language ?? "TypeScript";
-    const labels =
-      sourceMode === "github"
-        ? selectedIssue?.labels ?? []
-        : manualValidated?.labels ?? [];
-
-    const persist = (fundingTx: `0x${string}`) => {
-      const record: Bounty = {
-        id,
-        repo,
-        issueNumber,
-        issueTitle: issueTitle || `${repo} #${issueNumber}`,
-        amount: amountNum,
-        bond,
-        token: "USDC",
-        maintainer: (address ?? "0x0000000000000000000000000000000000000000") as `0x${string}`,
-        mode: mode === MODE.Instant ? "Instant" : "Safeguarded",
-        status: "Open",
-        deadline: deadlineSec,
-        createdAt: Math.floor(Date.now() / 1000),
-        language,
-        labels,
-        fundingTx,
-      };
-      saveLocalReward(record);
-    };
-
-    if (DEMO_MODE) {
-      setStep("approving");
-      await new Promise((r) => setTimeout(r, 700));
-      setStep("creating");
-      await new Promise((r) => setTimeout(r, 900));
-      persist("0x" as `0x${string}`);
-      setCreatedId(id);
-      setStep("done");
-      return;
-    }
-
     try {
+      const preparedIssue =
+        sourceMode === "new" ? await createGitHubIssueForReward() : null;
+      const rewardIssueNumber =
+        sourceMode === "new" ? preparedIssue!.number : issueNumber;
+      if (!rewardIssueNumber) throw new Error("Select or create a GitHub issue.");
+
+      const id = computeRewardId(repo, rewardIssueNumber);
+      const amountParsed = parseUnits(amount, USDC_DECIMALS);
+      const bondParsed = parseUnits(String(bond), USDC_DECIMALS);
+      const totalParsed = amountParsed + bondParsed;
+      const criteriaHash = criteriaHashFrom(criteria || title);
+      const deadlineSec =
+        Math.floor(Date.now() / 1000) + Number(deadlineDays) * 86400;
+      const deadline = BigInt(deadlineSec);
+
+      const issueTitle =
+        sourceMode === "github"
+          ? selectedIssue?.title ?? title
+          : sourceMode === "new"
+            ? preparedIssue!.title
+            : manualValidated?.title ?? title;
+      const language =
+        sourceMode === "github"
+          ? repos.find((r) => r.full_name === selectedRepo)?.language ?? "TypeScript"
+          : sourceMode === "new"
+            ? preparedIssue!.language ?? repos.find((r) => r.full_name === selectedRepo)?.language ?? "TypeScript"
+            : manualValidated?.language ?? "TypeScript";
+      const labels =
+        sourceMode === "github"
+          ? selectedIssue?.labels ?? []
+          : sourceMode === "new"
+            ? preparedIssue!.labels
+            : manualValidated?.labels ?? [];
+
+      const persist = (fundingTx: `0x${string}`) => {
+        const record: Bounty = {
+          id,
+          repo,
+          issueNumber: rewardIssueNumber,
+          issueTitle: issueTitle || `${repo} #${rewardIssueNumber}`,
+          amount: amountNum,
+          bond,
+          token: "USDC",
+          maintainer: (address ?? "0x0000000000000000000000000000000000000000") as `0x${string}`,
+          mode: mode === MODE.Instant ? "Instant" : "Safeguarded",
+          status: "Open",
+          deadline: deadlineSec,
+          createdAt: Math.floor(Date.now() / 1000),
+          language,
+          labels,
+          fundingTx,
+        };
+        saveLocalReward(record);
+      };
+
+      if (DEMO_MODE) {
+        setStep("approving");
+        await new Promise((r) => setTimeout(r, 700));
+        setStep("creating");
+        await new Promise((r) => setTimeout(r, 900));
+        persist("0x" as `0x${string}`);
+        setCreatedId(id);
+        setStep("done");
+        return;
+      }
+
       setStep("approving");
       await approve(totalParsed);
       setStep("creating");
@@ -303,7 +398,7 @@ function CreateRewardContent() {
         amount: amountParsed,
         bond: bondParsed,
         repo,
-        issueNumber: BigInt(issueNumber),
+        issueNumber: BigInt(rewardIssueNumber),
         criteriaHash,
         mode,
         deadline,
@@ -312,7 +407,7 @@ function CreateRewardContent() {
       fetch("/api/reward/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rewardId: id, repo, issue: issueNumber }),
+        body: JSON.stringify({ rewardId: id, repo, issue: rewardIssueNumber }),
       }).catch(() => {});
       setCreatedId(id);
       setStep("done");
@@ -360,7 +455,7 @@ function CreateRewardContent() {
     );
   }
 
-  const busy = step === "approving" || step === "creating";
+  const busy = step === "issuing" || step === "approving" || step === "creating";
   const filteredIssues = issueSearch
     ? issues.filter(
         (i) =>
@@ -384,7 +479,7 @@ function CreateRewardContent() {
         <CardHeader>
           <CardTitle>Select an issue</CardTitle>
           <CardDescription>
-            Use your GitHub repos, or paste a public issue URL.
+            Use an existing GitHub issue, create one, or paste a public URL.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -395,21 +490,23 @@ function CreateRewardContent() {
               onChange={(v) => {
                 setSourceMode(v);
                 setError(null);
+                setManualError(null);
               }}
               segments={[
-                { value: "github", label: "My GitHub repos" },
-                { value: "manual", label: "Paste issue URL" },
+                { value: "github", label: "Existing" },
+                { value: "new", label: "New issue" },
+                { value: "manual", label: "Paste URL" },
               ]}
             />
 
-            {/* ---------- GitHub-first flow ---------- */}
-            {sourceMode === "github" && (
+            {/* ---------- GitHub App flow ---------- */}
+            {(sourceMode === "github" || sourceMode === "new") && (
               <>
                 {!ghUser ? (
                   <div className="flex flex-col items-center gap-3 rounded-[8px] border border-dashed border-border py-6">
                     <GithubIcon className="h-8 w-8 text-muted" />
                     <p className="text-sm text-muted">
-                      Connect GitHub to pick one of your repos.
+                      Connect GitHub to use one of your repos.
                     </p>
                     <Button
                       type="button"
@@ -451,7 +548,11 @@ function CreateRewardContent() {
                       <div className="relative">
                         <select
                           value={selectedRepo}
-                          onChange={(e) => setSelectedRepo(e.target.value)}
+                          onChange={(e) => {
+                            setSelectedRepo(e.target.value);
+                            setSelectedIssue(null);
+                            setCreatedIssue(null);
+                          }}
                           disabled={reposLoading || repos.length === 0}
                           className="w-full appearance-none rounded-[6px] border border-border bg-bg px-3 py-2 pr-8 text-sm text-text font-mono transition-colors focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
                         >
@@ -484,7 +585,7 @@ function CreateRewardContent() {
                     </Field>
 
                     {/* Issue picker */}
-                    {selectedRepo && (
+                    {selectedRepo && sourceMode === "github" && (
                       <Field label="Issue" hint={
                         issuesLoading
                           ? "Loading issues..."
@@ -557,6 +658,47 @@ function CreateRewardContent() {
                           )}
                         </div>
                       </Field>
+                    )}
+
+                    {selectedRepo && sourceMode === "new" && (
+                      <>
+                        {createdIssue && (
+                          <div className="rounded-[8px] border border-ok/30 bg-[color-mix(in_srgb,var(--ok)_6%,transparent)] px-3 py-2.5">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="h-4 w-4 shrink-0 text-ok" strokeWidth={1.5} />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-text">
+                                  {createdIssue.title}
+                                </p>
+                                <a
+                                  href={createdIssue.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs text-muted hover:text-text"
+                                >
+                                  {selectedRepo} #{createdIssue.number}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <Field
+                          label="Labels"
+                          hint="Optional, comma-separated existing repo labels"
+                        >
+                          <Input
+                            value={newIssueLabels}
+                            onChange={(e) => {
+                              setNewIssueLabels(e.target.value);
+                              setCreatedIssue(null);
+                            }}
+                            placeholder="good first issue, bug"
+                            disabled={Boolean(createdIssue)}
+                          />
+                        </Field>
+                      </>
                     )}
 
                     {/* No app installed hint */}
@@ -671,15 +813,26 @@ function CreateRewardContent() {
             )}
 
             {/* ---------- Reward details (shared) ---------- */}
-            {(sourceMode === "github" ? selectedIssue : manualValidated) && (
+            {sourceReady && (
               <>
                 <hr className="border-border" />
 
-                <Field label="Issue title" hint="Shown on the rewards board (editable)">
+                <Field
+                  label="Issue title"
+                  hint={
+                    sourceMode === "new"
+                      ? "Used for the GitHub issue and rewards board"
+                      : "Shown on the rewards board (editable)"
+                  }
+                >
                   <Input
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      if (sourceMode === "new") setCreatedIssue(null);
+                    }}
                     placeholder="Add simulateBlocks action"
+                    disabled={sourceMode === "new" && Boolean(createdIssue)}
                   />
                 </Field>
 
@@ -709,10 +862,14 @@ function CreateRewardContent() {
                 >
                   <textarea
                     value={criteria}
-                    onChange={(e) => setCriteria(e.target.value)}
+                    onChange={(e) => {
+                      setCriteria(e.target.value);
+                      if (sourceMode === "new") setCreatedIssue(null);
+                    }}
                     rows={3}
                     placeholder="Example: fix the bug, add tests, and link the PR to this issue..."
-                    className="w-full resize-none rounded-[6px] border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                    disabled={sourceMode === "new" && Boolean(createdIssue)}
+                    className="w-full resize-none rounded-[6px] border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </Field>
 
@@ -797,11 +954,13 @@ function CreateRewardContent() {
                     {busy && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" strokeWidth={1.75} />
                     )}
-                    {step === "approving"
-                      ? "Approving USDC..."
-                      : step === "creating"
-                        ? "Locking USDC..."
-                        : `Approve & lock ${total.toLocaleString("en-US")} USDC`}
+                    {step === "issuing"
+                      ? "Creating GitHub issue..."
+                      : step === "approving"
+                        ? "Approving USDC..."
+                        : step === "creating"
+                          ? "Locking USDC..."
+                          : `Approve & lock ${total.toLocaleString("en-US")} USDC`}
                   </Button>
                 )}
               </>

@@ -68,8 +68,10 @@ export function MaintainerGithubCard() {
         isOpen={showDisconnect}
         onClose={() => setShowDisconnect(false)}
         onConfirm={() => {
-          document.cookie = "pullpay_gh=; max-age=0; path=/";
-          window.location.reload();
+          fetch("/api/github/logout", { method: "POST" }).finally(() => {
+            document.cookie = "pullpay_gh=; max-age=0; path=/";
+            window.location.reload();
+          });
         }}
         title="Disconnect GitHub"
         description="Are you sure you want to disconnect your GitHub account? You will need to reconnect to create rewards for your repositories."

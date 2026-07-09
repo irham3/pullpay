@@ -31,12 +31,17 @@ export function useOnchainRewards() {
     refetchInterval: 20_000,
     queryFn: async (): Promise<Bounty[]> => {
       if (!client) return [];
-      const logs = await client.getLogs({
-        address: ESCROW_ADDRESS,
-        event: REWARD_CREATED,
-        fromBlock: DEPLOY_BLOCK,
-        toBlock: "latest",
-      });
+      let logs: any[] = [];
+      try {
+        logs = await client.getLogs({
+          address: ESCROW_ADDRESS,
+          event: REWARD_CREATED,
+          fromBlock: DEPLOY_BLOCK,
+          toBlock: "latest",
+        });
+      } catch (err) {
+        console.error("useOnchainRewards getLogs error:", err);
+      }
       const ids = Array.from(
         new Set(logs.map((l) => l.args.id as `0x${string}`))
       );

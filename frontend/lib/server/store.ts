@@ -41,6 +41,15 @@ async function kvSet<T>(key: string, value: T): Promise<void> {
   data[key] = value;
   await fileWrite(data);
 }
+async function kvDel(key: string): Promise<void> {
+  if (redis) {
+    await redis.del(key);
+    return;
+  }
+  const data = await fileRead();
+  delete data[key];
+  await fileWrite(data);
+}
 
 // ---- Domain helpers ----
 
@@ -50,6 +59,23 @@ export const setMapping = (handle: string, address: string) =>
   kvSet(mapKey(handle), address);
 export const getMapping = (handle: string) =>
   kvGet<string>(mapKey(handle));
+
+// Short-lived GitHub user sessions. The browser only receives an opaque,
+// httpOnly session id; the OAuth token stays server-side for repo permission
+// checks on write actions.
+export interface GithubSession {
+  login: string;
+  accessToken: string;
+  expiresAt: number;
+}
+
+const githubSessionKey = (id: string) => `gh-session:${id}`;
+export const setGithubSession = (id: string, session: GithubSession) =>
+  kvSet(githubSessionKey(id), session);
+export const getGithubSession = (id: string) =>
+  kvGet<GithubSession>(githubSessionKey(id));
+export const deleteGithubSession = (id: string) =>
+  kvDel(githubSessionKey(id));
 
 // repo#issue → rewardId, so a merge webhook can find the reward (nonce unknown
 // otherwise). Registered by the maintainer at create time.

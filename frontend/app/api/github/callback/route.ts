@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { setGithubSession } from "@/lib/server/store";
 
 export const runtime = "nodejs";
 
@@ -30,7 +32,10 @@ export async function GET(req: Request) {
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
     });
-    const token = (await tokenRes.json()) as { access_token?: string };
+    const token = (await tokenRes.json()) as {
+      access_token?: string;
+      expires_in?: number;
+    };
     if (!token.access_token) {
       return NextResponse.redirect(new URL(`${next}${next.includes("?") ? "&" : "?"}gh=error`, origin));
     }
@@ -50,10 +55,24 @@ export async function GET(req: Request) {
     // Append gh=<login> to the return URL so the page knows who connected.
     const returnUrl = `${next}${next.includes("?") ? "&" : "?"}gh=${encodeURIComponent(user.login)}`;
     const res = NextResponse.redirect(new URL(returnUrl, origin));
+    const maxAge = Math.max(60, token.expires_in ?? 8 * 60 * 60);
+    const sessionId = randomUUID();
+    await setGithubSession(sessionId, {
+      login: user.login,
+      accessToken: token.access_token,
+      expiresAt: Date.now() + maxAge * 1000,
+    });
+    res.cookies.set("pullpay_gh_session", sessionId, {
+      path: "/",
+      maxAge,
+      sameSite: "lax",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
     // Non-httpOnly so the client can read the GitHub handle; short-lived.
     res.cookies.set("pullpay_gh", user.login, {
       path: "/",
-      maxAge: 3600,
+      maxAge,
       sameSite: "lax",
     });
     return res;

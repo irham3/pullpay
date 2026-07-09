@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { setRewardForIssue } from "@/lib/server/store";
 import { readReward } from "@/lib/server/relayer";
 import { DEMO_MODE } from "@/lib/contracts/addresses";
+import { comment } from "@/lib/server/githubApp";
 
 // POST /api/reward/register — links a repo#issue → rewardId so the webhook can
 // find it instantly. Verified on-chain first (repo+issue must match the record)
@@ -33,6 +34,12 @@ export async function POST(req: Request) {
       );
     }
     await setRewardForIssue(repo, issue, rewardId);
+    const origin = new URL(req.url).origin;
+    await comment(
+      repo,
+      issue,
+      `PullPay reward funded: ${origin}/reward/${rewardId}`
+    );
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(

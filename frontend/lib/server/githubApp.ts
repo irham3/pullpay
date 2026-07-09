@@ -13,6 +13,14 @@ export function githubAppConfigured(): boolean {
   return Boolean(process.env.GITHUB_APP_ID) && Boolean(process.env.GITHUB_APP_PRIVATE_KEY);
 }
 
+export function parseRepoFullName(
+  repoFull: string
+): { owner: string; repo: string } | null {
+  const [owner, repo, extra] = repoFull.split("/");
+  if (!owner || !repo || extra) return null;
+  return { owner, repo };
+}
+
 function appAuth() {
   return { appId: process.env.GITHUB_APP_ID!, privateKey: privateKey() };
 }
@@ -50,6 +58,94 @@ async function octokitForRepo(owner: string, repo: string) {
   if (!githubAppConfigured()) return null;
   const id = await resolveInstallationId(owner, repo);
   return id ? installationOctokit(id) : null;
+}
+
+function issueLabels(labels: Array<{ name?: string } | string> | null | undefined) {
+  return (labels ?? [])
+    .map((l) => (typeof l === "string" ? l : (l.name ?? "")))
+    .filter(Boolean);
+}
+
+export interface GithubIssueSummary {
+  number: number;
+  title: string;
+  labels: string[];
+  state: string;
+  url: string;
+}
+
+export interface CreatedGithubIssue extends GithubIssueSummary {
+  language: string | null;
+}
+
+/** List open issues via the installation token, including private repos. */
+export async function listOpenIssues(
+  repoFull: string
+): Promise<GithubIssueSummary[] | null> {
+  const parsed = parseRepoFullName(repoFull);
+  if (!parsed) return null;
+  const octo = await octokitForRepo(parsed.owner, parsed.repo);
+  if (!octo) return null;
+
+  const { data } = await octo.issues.listForRepo({
+    owner: parsed.owner,
+    repo: parsed.repo,
+    state: "open",
+    per_page: 50,
+    sort: "created",
+    direction: "desc",
+  });
+
+  return data
+    .filter((item) => !item.pull_request)
+    .map((item) => ({
+      number: item.number,
+      title: item.title,
+      labels: issueLabels(item.labels),
+      state: item.state,
+      url: item.html_url,
+    }));
+}
+
+/** Create a GitHub issue from PullPay after caller authorization is checked. */
+export async function createIssue(
+  repoFull: string,
+  input: { title: string; body?: string; labels?: string[] }
+): Promise<CreatedGithubIssue> {
+  const parsed = parseRepoFullName(repoFull);
+  if (!parsed) throw new Error("Invalid repo");
+  const octo = await octokitForRepo(parsed.owner, parsed.repo);
+  if (!octo) throw new Error("PullPay GitHub App is not installed on this repo");
+
+  const labels = (input.labels ?? [])
+    .map((label) => label.trim())
+    .filter(Boolean)
+    .slice(0, 10);
+
+  const issueRes = await octo.issues.create({
+    owner: parsed.owner,
+    repo: parsed.repo,
+    title: input.title,
+    body: input.body,
+    labels: labels.length > 0 ? labels : undefined,
+  });
+
+  let language: string | null = null;
+  try {
+    const repoRes = await octo.repos.get({ owner: parsed.owner, repo: parsed.repo });
+    language = repoRes.data.language ?? null;
+  } catch {
+    language = null;
+  }
+
+  return {
+    number: issueRes.data.number,
+    title: issueRes.data.title,
+    labels: issueLabels(issueRes.data.labels),
+    state: issueRes.data.state,
+    url: issueRes.data.html_url,
+    language,
+  };
 }
 
 /** Post a comment on an issue or PR (same endpoint). Best-effort. */

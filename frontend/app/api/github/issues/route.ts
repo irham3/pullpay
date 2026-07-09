@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { fetchIssue } from "@/lib/server/github";
+import { createIssue, listOpenIssues } from "@/lib/server/githubApp";
+import {
+  githubSessionFromRequest,
+  githubUserCanWriteRepo,
+} from "@/lib/server/githubSession";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,6 +64,9 @@ export async function GET(req: Request) {
   }
 
   try {
+    const appIssues = await listOpenIssues(repo);
+    if (appIssues) return NextResponse.json({ issues: appIssues });
+
     const res = await fetch(
       `${GH}/repos/${repo}/issues?state=open&per_page=50&sort=created&direction=desc`,
       { headers: headers(), cache: "no-store" }
@@ -90,6 +98,94 @@ export async function GET(req: Request) {
     return NextResponse.json(
       { error: "Failed to fetch issues" },
       { status: 502 }
+    );
+  }
+}
+
+// POST /api/github/issues
+// Creates an issue through the PullPay GitHub App, after verifying the logged-in
+// GitHub user has write access to that repo.
+export async function POST(req: Request) {
+  const session = await githubSessionFromRequest(req);
+  if (!session) {
+    return NextResponse.json(
+      { error: "Connect GitHub before creating an issue" },
+      { status: 401 }
+    );
+  }
+
+  let body: {
+    repo?: string;
+    title?: string;
+    body?: string;
+    labels?: string[];
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const repo = String(body.repo || "").trim();
+  const title = String(body.title || "").trim();
+  const issueBody = String(body.body || "").trim();
+  const labels = Array.isArray(body.labels)
+    ? body.labels.map((label) => String(label).trim()).filter(Boolean).slice(0, 10)
+    : [];
+
+  if (!repo.includes("/") || repo.split("/").length !== 2) {
+    return NextResponse.json(
+      { error: "repo must be owner/repo" },
+      { status: 400 }
+    );
+  }
+  if (title.length < 3 || title.length > 256) {
+    return NextResponse.json(
+      { error: "Issue title must be 3-256 characters" },
+      { status: 400 }
+    );
+  }
+  if (issueBody.length > 65_536) {
+    return NextResponse.json(
+      { error: "Issue body is too long" },
+      { status: 400 }
+    );
+  }
+
+  const canWrite = await githubUserCanWriteRepo(
+    repo,
+    session.accessToken,
+    session.login
+  );
+  if (!canWrite) {
+    return NextResponse.json(
+      { error: "Your GitHub account does not have write access to this repo" },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const issue = await createIssue(repo, {
+      title,
+      body: issueBody,
+      labels,
+    });
+    return NextResponse.json({
+      full_name: repo,
+      issue: issue.number,
+      ...issue,
+    });
+  } catch (e) {
+    const status =
+      typeof e === "object" &&
+      e !== null &&
+      "status" in e &&
+      typeof (e as { status?: unknown }).status === "number"
+        ? (e as { status: number }).status
+        : 502;
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Failed to create issue" },
+      { status }
     );
   }
 }
