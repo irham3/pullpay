@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { settleReward } from "@/lib/server/settle";
 
-// POST /api/settle — called by pullpay.yml after a PR merges (PRD §8.3, §32)
+// POST /api/settle — called by the GitHub App webhook after a PR merges (PRD §8.3, §32)
 // and by the maintainer UI ("Settle from PR"). Triggering a settle is safe to
 // leave open: the payout target is derived server-side from the real PR author's
 // verified wallet mapping. Only callers presenting the shared secret are

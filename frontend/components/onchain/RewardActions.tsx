@@ -5,7 +5,6 @@ import { useAccount } from "wagmi";
 import { stringToHex } from "viem";
 import type { Bounty } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { ConnectButton } from "@/components/layout/ConnectButton";
 import {
   useRefund,
@@ -29,9 +28,7 @@ export function RewardActions({
   const { escalate, isEscalating } = useEscalate();
   const { resolve, isResolving } = useResolveAssertion();
 
-  const [pr, setPr] = React.useState("");
   const [note, setNote] = React.useState<string | null>(null);
-  const [settling, setSettling] = React.useState(false);
   const [nowSec, setNowSec] = React.useState<number | null>(null);
 
   React.useEffect(() => {
@@ -71,71 +68,11 @@ export function RewardActions({
     }
   }
 
-  async function triggerRelayer() {
-    setNote(null);
-    if (!pr) {
-      setNote("Enter the merged PR number first.");
-      return;
-    }
-    setSettling(true);
-    try {
-      const res = await fetch("/api/settle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rewardId: bounty.id,
-          repo: bounty.repo,
-          pr: Number(pr),
-          issue: bounty.issueNumber,
-        }),
-      });
-      const data = await res.json();
-      setNote(
-        res.ok
-          ? `Payout request sent: ${data.action}, tx ${String(data.txHash).slice(0, 10)}...`
-          : `Could not settle: ${data.error}${data.hint ? ` (${data.hint})` : ""}`
-      );
-    } catch (e) {
-      setNote(e instanceof Error ? e.message : "settle call failed");
-    } finally {
-      setSettling(false);
-    }
-  }
-
   const sections: React.ReactNode[] = [];
 
-  // Payout is always resolved to the merged PR author's own linked wallet — the
-  // maintainer never types a contributor address. The primary path is the Pull
-  // requests panel ("Release payout" per PR); this is a fallback for a merged PR
-  // the webhook didn't capture (e.g. paste-URL rewards without the App).
-  if (isMaintainer && isOpen && !DEMO_MODE) {
-    sections.push(
-      <div key="relayer" className="space-y-2">
-        <div className="text-xs text-muted">
-          Pay from a merged PR by number. PullPay verifies the merge on GitHub and
-          pays the PR author&apos;s linked wallet — no address needed.
-        </div>
-        <div className="flex gap-2">
-          <Input
-            mono
-            value={pr}
-            onChange={(e) => setPr(e.target.value)}
-            placeholder="PR #"
-            className="w-24"
-          />
-          <Button
-            variant="outline"
-            className="flex-1"
-            disabled={settling}
-            onClick={triggerRelayer}
-          >
-            {settling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Settle from PR
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Note: there is no maintainer "settle" button. Merging the PR on GitHub is the
+  // maintainer's only action — the webhook pays automatically, and a contributor
+  // whose wallet wasn't linked yet claims from the Pull requests panel.
 
   if (
     MOCK_ORACLE &&

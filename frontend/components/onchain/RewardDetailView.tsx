@@ -9,7 +9,6 @@ import { DisputePanel } from "@/components/onchain/DisputePanel";
 import { RewardActions } from "@/components/onchain/RewardActions";
 import { StatusControl } from "@/components/onchain/StatusControl";
 import { PullRequestsPanel } from "@/components/onchain/PullRequestsPanel";
-import { YamlPanel } from "@/components/onchain/YamlPanel";
 import { AddressChip } from "@/components/onchain/AddressChip";
 import { STATUS_META } from "@/lib/status";
 import { LANG_COLORS } from "@/lib/languages";
@@ -77,10 +76,6 @@ export function RewardDetailView({
           <PullRequestsPanel bounty={bounty} />
 
           <DisputePanel bounty={bounty} />
-
-          {["Open", "In Review", "Changes Requested", "Merged"].includes(
-            bounty.status
-          ) && <YamlPanel bounty={bounty} />}
 
           <div className="rounded-[10px] border border-border bg-surface">
             <div className="border-b border-border px-4 py-3 text-sm font-medium text-text">

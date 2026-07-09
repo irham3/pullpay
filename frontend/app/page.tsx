@@ -67,8 +67,8 @@ const WORKFLOW_STEPS = [
   {
     n: 2,
     title: "Connect repo",
-    body: "The repo sends PullPay a message when a PR is merged.",
-    code: "GitHub App or pullpay.yml",
+    body: "The PullPay GitHub App detects when a PR is merged.",
+    code: "GitHub App webhook",
   },
   {
     n: 3,

@@ -120,6 +120,14 @@ export async function POST(req: Request) {
       }
 
       if (action === "closed" && pr.merged) {
+        // The merge itself is the maintainer's decision — mark Merged and choose
+        // the winning PR right away, no in-app click needed. Payout then runs
+        // automatically below (and on-chain state drives Verifying → Paid).
+        await patchStoredReward(rewardId, {
+          status: "Merged",
+          prNumber: pr.number,
+          contributorHandle: pr.user?.login,
+        });
         const result = await settleReward({
           rewardId,
           repo,
@@ -140,20 +148,16 @@ export async function POST(req: Request) {
             action2 === "settleInstant" ? "success" : "pending",
             action2 === "settleInstant" ? "Reward paid" : "Reward verifying"
           );
-          // Mark Merged in the shared store; on-chain state then drives the rest
-          // (Verifying → Paid) via mergeUiStatus at render time.
-          await patchStoredReward(rewardId, {
-            status: "Merged",
-            prNumber: pr.number,
-            contributorHandle: pr.user?.login,
-          });
         } else {
+          // Most commonly: the author hasn't linked a wallet yet. The reward
+          // stays Merged; the contributor links + claims from the reward page.
+          const origin = new URL(req.url).origin;
           await comment(
             repo,
             pr.number,
-            `PullPay could not start payout: ${result.body.error}${
+            `Merged — reward is ready. @${pr.user?.login}, link your wallet at ${origin}/contributor to receive the USDC payout${
               result.body.hint ? ` (${result.body.hint})` : ""
-            }`
+            }.`
           );
         }
         return NextResponse.json(result.body, { status: result.status });

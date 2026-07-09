@@ -39,7 +39,7 @@ const MAINTAINER_STEPS = [
   },
   {
     title: "Connect the repo",
-    body: "Install the GitHub App or add pullpay.yml so PullPay knows when a PR is merged.",
+    body: "Install the GitHub App on your repo so PullPay knows when a PR is merged.",
   },
 ];
 
@@ -80,27 +80,6 @@ const MODES = [
       "PullPay sends the payout request to UMA before payment. A false request can be disputed.",
   },
 ];
-
-const yamlExample = `name: PullPay
-on:
-  pull_request:
-    types: [closed]
-jobs:
-  settle:
-    if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    steps:
-      - name: Notify PullPay relayer
-        run: |
-          curl -X POST "https://your-pullpay.app/api/settle" \\
-            -H 'Content-Type: application/json' \\
-            -d '{
-              "rewardId": "0x...",
-              "repo": "owner/repo",
-              "pr": \${{ github.event.pull_request.number }},
-              "issue": 123,
-              "author": "\${{ github.event.pull_request.user.login }}"
-            }'`;
 
 const settlePayload = `{
   "rewardId": "0x...",
@@ -200,29 +179,20 @@ export default function DocsPage() {
               id="repo-wiring"
               eyebrow="GitHub"
               title="Connect GitHub to PullPay"
-              body="PullPay must hear about merged PRs. Use the GitHub App or commit the workflow below."
+              body="PullPay must hear about merged PRs. Install the PullPay GitHub App on your repository to automatically trigger payouts upon merge."
             >
-              <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
-                <CodeBlock title=".github/workflows/pullpay.yml" code={yamlExample} />
-                <div className="space-y-3">
+              <div className="space-y-3">
                   <RequirementCard
                     icon={<FileCode2 className="h-4 w-4" strokeWidth={1.75} />}
-                    title="Where to put it"
-                    body="Commit this file to the same repo as the funded issue."
-                  />
-                  <RequirementCard
-                    icon={<GitPullRequest className="h-4 w-4" strokeWidth={1.75} />}
-                    title="When it runs"
-                    body="It only calls PullPay after a pull request is closed and merged."
+                    title="GitHub App Webhook"
+                    body="The App listens for PR merge events and notifies the PullPay smart contract automatically."
                   />
                   <RequirementCard
                     icon={<ShieldCheck className="h-4 w-4" strokeWidth={1.75} />}
                     title="Safety check"
-                    body="PullPay checks GitHub again before payout."
+                    body="PullPay verifies the PR status on GitHub before releasing any payout."
                   />
-                </div>
               </div>
-              <CodeBlock title="POST /api/settle payload" code={settlePayload} />
             </DocSection>
 
             <DocSection
@@ -261,11 +231,6 @@ export default function DocsPage() {
                   title="Maintainer direct release"
                   actor="Maintainer"
                   detail="For Instant rewards, the maintainer can manually pay a contributor address."
-                />
-                <RunbookRow
-                  title="Settle from PR"
-                  actor="Maintainer or relayer"
-                  detail="Submit a merged PR number. PullPay verifies it before payout."
                 />
                 <RunbookRow
                   title="Contributor escalation"

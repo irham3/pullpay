@@ -76,7 +76,7 @@ verification gate is what turns "merge" into "paid".
 | Path | Trigger | Function |
 | --- | --- | --- |
 | Instant (maintainer trust) | Maintainer clicks release | `approveAndRelease` |
-| Instant (relayer) | Merged PR → `pullpay.yml` → `/api/settle` | `settleInstant` |
+| Instant (relayer) | Merged PR → GitHub App webhook → `/api/settle` | `settleInstant` |
 | Safeguarded (UMA) | Merged PR, pooled/sponsor funds | `assertMerge` → oracle → callback |
 | Refund | Deadline passes, unclaimed | `refund` |
 
