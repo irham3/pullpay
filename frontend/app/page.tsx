@@ -26,6 +26,7 @@ import StarBorder from "@/components/reactbits/StarBorder";
 
 const AURORA_STOPS = ["#2E1065", "#8B5CF6", "#F0ABFC"];
 // tes tes
+// halo halo
 const VALUE_CARDS = [
   {
     icon: ShieldCheck,
