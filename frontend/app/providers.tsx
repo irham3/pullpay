@@ -16,7 +16,7 @@ export function Providers({
 }) {
   // One QueryClient per app mount; stable across renders.
   const [queryClient] = React.useState(() => new QueryClient());
-
+  // halo halo mau nambahin
   return (
     <WagmiProvider config={config} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
