@@ -17,6 +17,14 @@ export interface MergeInfo {
   intoDefaultBranch: boolean;
   author: string | null;
   title: string;
+  body: string;
+}
+
+// First issue number a PR declares it closes ("closes #12", "fixes #7", …).
+// Shared by the webhook and the settle path so both use the same linkage rule.
+export function closingIssue(text: string): number | null {
+  const m = /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/i.exec(text || "");
+  return m ? Number(m[1]) : null;
 }
 
 // Re-verify a merge server-side via the GitHub API — never trust the workflow
@@ -35,6 +43,7 @@ export async function verifyMerge(repo: string, pr: number): Promise<MergeInfo> 
     intoDefaultBranch: prData.base?.ref === repoData.default_branch,
     author: prData.user?.login ?? null,
     title: prData.title ?? "",
+    body: prData.body ?? "",
   };
 }
 

@@ -105,8 +105,15 @@ async function addToIndex(id: string): Promise<void> {
   }
 }
 
+// Upsert that keeps whatever the existing record already knows (GitHub metadata,
+// soft status) unless the caller explicitly provides a fresher value.
 export async function saveReward(r: StoredReward): Promise<void> {
-  const record = { ...r, updatedAt: Math.floor(Date.now() / 1000) };
+  const existing = await kvGet<StoredReward>(rewardKey(r.id));
+  const record = {
+    ...existing,
+    ...r,
+    updatedAt: Math.floor(Date.now() / 1000),
+  };
   await kvSet(rewardKey(r.id), record);
   await addToIndex(r.id);
 }
@@ -135,6 +142,51 @@ export async function listStoredRewards(): Promise<StoredReward[]> {
   const records = await Promise.all(ids.map((id) => getStoredReward(id)));
   return records.filter((r): r is StoredReward => Boolean(r));
 }
+
+// ---- Indexer bookkeeping ----
+// The server-side chain indexer scans RewardCreated/RewardSettled incrementally;
+// these keys remember how far it got and when it last ran, so the browser never
+// has to issue eth_getLogs itself (public RPCs reject wide ranges).
+const SCAN_BLOCK_KEY = "rewards:lastScannedBlock";
+const SCAN_TS_KEY = "rewards:lastSyncTs";
+
+export async function getLastScannedBlock(): Promise<bigint | null> {
+  const v = await kvGet<string>(SCAN_BLOCK_KEY);
+  return v ? BigInt(v) : null;
+}
+export const setLastScannedBlock = (block: bigint) =>
+  kvSet(SCAN_BLOCK_KEY, block.toString());
+
+export const getLastSyncTs = () => kvGet<number>(SCAN_TS_KEY);
+export const setLastSyncTs = (ts: number) => kvSet(SCAN_TS_KEY, ts);
+
+// ---- Contributor payouts (from RewardSettled events) ----
+// Populated by the indexer so contributor profiles come from the shared store
+// instead of a per-browser log scan.
+export interface SettledPayout {
+  rewardId: `0x${string}`;
+  repo: string;
+  issueNumber: number;
+  amount: number; // human USDC units
+  attestationUID: `0x${string}`;
+  txHash: `0x${string}`;
+  date: number; // unix seconds (block timestamp)
+}
+
+const settledKey = (addr: string) => `settled:${addr.toLowerCase()}`;
+
+export async function addSettledPayout(
+  contributor: string,
+  payout: SettledPayout
+): Promise<void> {
+  const all = (await kvGet<SettledPayout[]>(settledKey(contributor))) ?? [];
+  if (all.some((p) => p.txHash === payout.txHash && p.rewardId === payout.rewardId))
+    return;
+  await kvSet(settledKey(contributor), [payout, ...all]);
+}
+
+export const getSettledPayouts = (contributor: string) =>
+  kvGet<SettledPayout[]>(settledKey(contributor)).then((v) => v ?? []);
 
 // GitHub App installation id per account owner (to post comments/checks).
 const installKey = (owner: string) => `install:${owner.toLowerCase()}`;

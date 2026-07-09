@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { settleReward } from "@/lib/server/settle";
 
-// POST /api/settle — called by pullpay.yml after a PR merges (PRD §8.3, §32).
-// Thin wrapper over the shared settle logic (also used by the GitHub App webhook).
+// POST /api/settle — called by pullpay.yml after a PR merges (PRD §8.3, §32)
+// and by the maintainer UI ("Settle from PR"). Triggering a settle is safe to
+// leave open: the payout target is derived server-side from the real PR author's
+// verified wallet mapping. Only callers presenting the shared secret are
+// "trusted" and may override the contributor address.
 export async function POST(req: Request) {
   const secret = process.env.GITHUB_WEBHOOK_SECRET;
-  if (secret && req.headers.get("x-pullpay-secret") !== secret) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const trusted = Boolean(
+    secret && req.headers.get("x-pullpay-secret") === secret
+  );
 
   let body: Record<string, unknown>;
   try {
@@ -21,8 +24,9 @@ export async function POST(req: Request) {
     repo: String(body.repo || ""),
     pr: Number(body.pr),
     issue: Number(body.issue),
-    author: body.author as string | undefined,
-    contributor: body.contributor as string | undefined,
+    // Ignored unless trusted — an open caller must never steer the payout.
+    contributor: trusted ? (body.contributor as string | undefined) : undefined,
+    trusted,
   });
 
   return NextResponse.json(result.body, { status: result.status });

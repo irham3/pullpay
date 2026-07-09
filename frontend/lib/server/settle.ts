@@ -7,7 +7,7 @@ import {
   readReward,
   readRewardMode,
 } from "./relayer";
-import { verifyMerge } from "./github";
+import { verifyMerge, closingIssue } from "./github";
 import { getMapping } from "./store";
 import { buildClaim } from "@/lib/rewardId";
 import { DEMO_MODE } from "@/lib/contracts/addresses";
@@ -17,8 +17,14 @@ export interface SettleInput {
   repo: string;
   pr: number;
   issue: number;
-  author?: string;
+  /**
+   * Contributor wallet override. Only honoured when `trusted` is set by the
+   * caller (webhook with verified HMAC / API call with the shared secret).
+   * Untrusted callers always pay the PR author's own verified mapping —
+   * otherwise anyone could redirect a payout to an arbitrary address.
+   */
   contributor?: string;
+  trusted?: boolean;
 }
 
 export interface SettleResult {
@@ -56,8 +62,29 @@ export async function settleReward(input: SettleInput): Promise<SettleResult> {
   if (!merge.merged) {
     return { status: 409, body: { error: "PR is not merged" } };
   }
+  if (!merge.intoDefaultBranch) {
+    return {
+      status: 409,
+      body: {
+        error: "PR was not merged into the default branch",
+        hint: "only merges into the default branch trigger payout",
+      },
+    };
+  }
+  // The PR must declare it closes the funded issue ("closes #N"). Without this,
+  // any merged PR in the repo (e.g. a typo fix) could claim any reward there.
+  const linked = closingIssue(`${merge.title}\n${merge.body}`);
+  if (linked !== issue) {
+    return {
+      status: 409,
+      body: {
+        error: `PR does not close issue #${issue}`,
+        hint: `add "closes #${issue}" to the PR description, then retry`,
+      },
+    };
+  }
 
-  // 2) Reward must be Funded.
+  // 2) Reward must be Funded, for this exact repo + issue.
   const reward = await readReward(rewardId);
   if (reward.status !== 1) {
     return {
@@ -65,12 +92,25 @@ export async function settleReward(input: SettleInput): Promise<SettleResult> {
       body: { error: `reward not Funded (status ${reward.status})` },
     };
   }
+  if (
+    reward.repo.toLowerCase() !== repo.toLowerCase() ||
+    Number(reward.issueNumber) !== issue
+  ) {
+    return {
+      status: 409,
+      body: { error: "rewardId does not match repo/issue on-chain" },
+    };
+  }
 
-  // 3) Resolve the contributor wallet.
-  let contributor = (input.contributor as Address) || undefined;
-  if (!contributor || !isAddress(contributor)) {
-    const handle = input.author || merge.author;
-    const mapped = handle ? await getMapping(handle) : null;
+  // 3) Resolve the contributor wallet. The author is taken from the GitHub API
+  // (merge.author) — never from the request — so the payout target can only be
+  // the wallet the real PR author verified for themselves.
+  let contributor: Address | undefined =
+    input.trusted && input.contributor && isAddress(input.contributor)
+      ? (input.contributor as Address)
+      : undefined;
+  if (!contributor) {
+    const mapped = merge.author ? await getMapping(merge.author) : null;
     if (!mapped) {
       return {
         status: 422,

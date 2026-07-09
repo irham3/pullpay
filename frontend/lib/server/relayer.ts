@@ -73,6 +73,50 @@ export async function readRewardMode(id: `0x${string}`): Promise<number> {
   return Number(r[7]);
 }
 
+// Full rewards(id) record, parsed. The tuple layout mirrors the Reward struct.
+export interface FullRewardRecord {
+  maintainer: Address;
+  token: Address;
+  amount: bigint;
+  bond: bigint;
+  repo: string;
+  issueNumber: bigint;
+  criteriaHash: `0x${string}`;
+  mode: number; // 0 Instant, 1 Safeguarded
+  deadline: bigint;
+  assertionId: `0x${string}`;
+  contributor: Address;
+  status: number; // 0 None … 5 Rejected
+}
+
+export function parseFullRecord(r: readonly unknown[]): FullRewardRecord {
+  return {
+    maintainer: r[0] as Address,
+    token: r[1] as Address,
+    amount: r[2] as bigint,
+    bond: r[3] as bigint,
+    repo: String(r[4]),
+    issueNumber: r[5] as bigint,
+    criteriaHash: r[6] as `0x${string}`,
+    mode: Number(r[7]),
+    deadline: r[8] as bigint,
+    assertionId: r[9] as `0x${string}`,
+    contributor: r[10] as Address,
+    status: Number(r[11]),
+  };
+}
+
+export async function readFullReward(
+  id: `0x${string}`
+): Promise<FullRewardRecord> {
+  const r = (await publicClient.readContract({
+    ...escrow,
+    functionName: "rewards",
+    args: [id],
+  })) as readonly unknown[];
+  return parseFullRecord(r);
+}
+
 const REWARD_CREATED = parseAbiItem(
   "event RewardCreated(bytes32 indexed id, address indexed maintainer, uint256 amount)"
 );

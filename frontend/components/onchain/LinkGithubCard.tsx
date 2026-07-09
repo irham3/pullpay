@@ -71,7 +71,7 @@ export function LinkGithubCard() {
           href="/api/github/login"
           className="mt-2 inline-block text-xs text-accent hover:underline"
         >
-          Verify with GitHub (recommended)
+          Verify with GitHub (required)
         </a>
       )}
 
@@ -79,12 +79,15 @@ export function LinkGithubCard() {
         <Input
           value={handle}
           onChange={(e) => setHandle(e.target.value.replace(/^@/, ""))}
-          placeholder="your-github-username"
+          placeholder="verify with GitHub first"
           readOnly={verified}
+          disabled={!verified}
         />
+        {/* Linking needs a verified GitHub session — the server refuses to map a
+            handle the caller hasn't proven, so don't offer a dead button. */}
         <Button
           onClick={link}
-          disabled={!handle || state === "signing"}
+          disabled={!verified || !handle || state === "signing"}
           className="shrink-0"
         >
           {state === "signing" ? (

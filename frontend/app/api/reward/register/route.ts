@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { setRewardForIssue } from "@/lib/server/store";
+import { setRewardForIssue, getRewardForIssue } from "@/lib/server/store";
 import { readReward } from "@/lib/server/relayer";
 import { DEMO_MODE } from "@/lib/contracts/addresses";
 import { comment } from "@/lib/server/githubApp";
@@ -33,13 +33,18 @@ export async function POST(req: Request) {
         { status: 409 }
       );
     }
+    // Idempotent: only comment the first time this link is registered, so a
+    // repeat caller can't spam the issue with duplicate funding comments.
+    const already = await getRewardForIssue(repo, issue);
     await setRewardForIssue(repo, issue, rewardId);
-    const origin = new URL(req.url).origin;
-    await comment(
-      repo,
-      issue,
-      `PullPay reward funded: ${origin}/reward/${rewardId}`
-    );
+    if (already?.toLowerCase() !== rewardId.toLowerCase()) {
+      const origin = new URL(req.url).origin;
+      await comment(
+        repo,
+        issue,
+        `PullPay reward funded: ${origin}/reward/${rewardId}`
+      );
+    }
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useOnchainRewards } from "@/hooks/useOnchainRewards";
+import { useRewards } from "@/hooks/useRewards";
 import { CountUp } from "@/components/ui/CountUp";
 import { DEMO_MODE } from "@/lib/contracts/addresses";
 
@@ -13,7 +13,7 @@ const DEMO_STATS = {
 };
 
 export function HeroStats() {
-  const { data: rewards = [] } = useOnchainRewards();
+  const { rewards } = useRewards();
 
   const openStates = ["Open", "In Review", "Changes Requested", "Merged", "Verifying"];
   const lockedOnchain = rewards

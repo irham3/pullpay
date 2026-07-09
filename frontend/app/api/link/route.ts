@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyMessage, isAddress } from "viem";
 import { setMapping, getMapping } from "@/lib/server/store";
+import { githubSessionFromRequest } from "@/lib/server/githubSession";
 
 // The exact message a contributor signs to prove wallet ownership (SIWE-style, §30.5).
 export function linkMessage(handle: string, address: string) {
@@ -8,6 +9,11 @@ export function linkMessage(handle: string, address: string) {
 }
 
 // POST /api/link — { handle, address, signature }
+// Two proofs are required, one per side of the mapping:
+//  1. a GitHub OAuth session whose login matches the handle (proves the handle),
+//  2. a wallet signature over the link message (proves the address).
+// Without (1), anyone could map someone else's handle to their own wallet and
+// silently receive that person's payouts.
 export async function POST(req: Request) {
   try {
     const { handle, address, signature } = await req.json();
@@ -17,6 +23,21 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    const session = await githubSessionFromRequest(req);
+    if (!session) {
+      return NextResponse.json(
+        { error: "verify with GitHub first — connect GitHub, then link" },
+        { status: 401 }
+      );
+    }
+    if (session.login.toLowerCase() !== String(handle).toLowerCase()) {
+      return NextResponse.json(
+        { error: `signed in as @${session.login}, not @${handle}` },
+        { status: 403 }
+      );
+    }
+
     const valid = await verifyMessage({
       address,
       message: linkMessage(handle, address),

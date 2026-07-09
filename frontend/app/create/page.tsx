@@ -376,13 +376,13 @@ function CreateRewardContent() {
           fundingTx,
         };
         saveLocalReward(record);
-        // Persist to the shared server store so the reward is visible to every
-        // user (not just this browser). Fire-and-forget: local cache already
-        // covers this session, and the webhook re-links via issue → rewardId.
+        // Index into the shared server store right away so the reward is visible
+        // to every user (not just this browser). Only the id is sent — the server
+        // reads all fields from the chain and GitHub itself, nothing spoofable.
         fetch("/api/rewards", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(record),
+          body: JSON.stringify({ id, fundingTx }),
         }).catch(() => {});
       };
 

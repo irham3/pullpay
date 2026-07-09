@@ -10,6 +10,7 @@ import {
   patchStoredReward,
 } from "@/lib/server/store";
 import { readReward, findRewardIdForIssue } from "@/lib/server/relayer";
+import { closingIssue } from "@/lib/server/github";
 import { USDC_DECIMALS } from "@/lib/contracts/addresses";
 
 async function resolveRewardId(
@@ -32,11 +33,6 @@ function verifySignature(raw: string, sig: string | null, secret: string): boole
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
-
-function closingIssue(text: string): number | null {
-  const m = /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/i.exec(text || "");
-  return m ? Number(m[1]) : null;
 }
 
 export async function POST(req: Request) {
@@ -105,7 +101,7 @@ export async function POST(req: Request) {
           repo,
           pr: pr.number,
           issue,
-          author: pr.user?.login,
+          trusted: true, // HMAC signature verified above
         });
         if (result.body.ok) {
           const action2 = result.body.action;
