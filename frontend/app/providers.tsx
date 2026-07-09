@@ -6,7 +6,7 @@ import { WagmiProvider, type State } from "wagmi";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { config } from "@/lib/wagmi";
 import "@rainbow-me/rainbowkit/styles.css";
-
+// tes tes perubahan
 export function Providers({
   children,
   initialState,
