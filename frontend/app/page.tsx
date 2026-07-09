@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { HeroStats } from "@/components/HeroStats";
-import { RedirectIfConnected } from "@/components/RedirectIfConnected";
+
 import Aurora from "@/components/reactbits/Aurora";
 import ClickSpark from "@/components/reactbits/ClickSpark";
 import SpotlightCard from "@/components/reactbits/SpotlightCard";
@@ -129,7 +129,7 @@ export default function Home() {
       sparkSize={8}
     >
       <main className="flex-1 overflow-hidden">
-        <RedirectIfConnected />
+
 
         <section className="relative isolate overflow-hidden border-b border-border bg-bg">
           <div className="absolute inset-0 opacity-80">
